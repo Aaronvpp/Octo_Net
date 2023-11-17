@@ -22,6 +22,7 @@ class Audio:
     def __init__(self,
                  playargs
                  ):
+        self.playargs = playargs
         self.event = threading.Event()
         self._thread = False
         self._sampling_rate = playargs.sampling_rate
@@ -32,7 +33,8 @@ class Audio:
         self.datarec = np.array([], dtype=np.float32)
 
     def begin(self):
-        self._thread = True
+        if not self._thread:
+            self._thread = True
         threading.Thread(target=self._run).start()
 
     def end(self):
@@ -71,6 +73,46 @@ class AudioPlayer(Audio):
                  ):
         super(AudioPlayer, self).__init__(
             playargs)
+        self._data = None
+
+        logger.debug("AudioPlayer::data_shape: {}".format(self._data.shape))
+    
+    def load_audio_clip(self):
+        dataplay_loader = AcousticDataplayLoader()
+        self._data, _ = dataplay_loader(self.playargs)
+        
+    def begin(self):
+        if not self._thread:
+            self._thread = True
+        threading.Thread(target=self._run).start()
+
+    def _run(self):
+        try:
+            while self._thread:
+                if self._data is None:
+                    self.load_audio_clip()
+                sd.play(self.audio_clip, self._sampling_rate)
+                self.audio_clip = None
+
+        except queue.Full:
+            pass
+        except Exception as e:
+            print(type(e).__name__ + ': ' + str(e))
+        finally:
+            logger.info("End")
+            sd.stop()
+    
+    
+
+ 
+            
+
+
+class AudioPlayandRecord(Audio):
+    def __init__(self,
+                 playargs,
+                 path):
+        super().__init__(playargs)
         self.stream = sd.Stream(
             samplerate=self._sampling_rate,
             blocksize=self._blocksize,
@@ -79,61 +121,7 @@ class AudioPlayer(Audio):
             finished_callback=self.event.set,
         )
         dataplay_loader = AcousticDataplayLoader()
-        self._data, _ = dataplay_loader(playargs)
-
-        logger.debug("AudioPlayer::data_shape: {}".format(self._data.shape))
-
-    def _run(self):
-        try:
-            self.stream.start()
-            for _ in range(self._buffersize):
-                data = self._data[:self._blocksize].astype(np.float32)
-                self._q.put_nowait(data)
-                self._data = np.roll(self._data, -self._blocksize)
-            timeout = self._blocksize * self._buffersize / self._sampling_rate
-            while self._thread:
-                data = self._data[:self._blocksize].astype(np.float32)
-                self._q.put(data, block=True, timeout=timeout)
-                self._data = np.roll(self._data, -self._blocksize)
-            self.event.wait()
-
-        except queue.Full:
-            pass
-        except Exception as e:
-            print(type(e).__name__ + ': ' + str(e))
-        finally:
-            logger.info("End")
-            self.stream.stop()
-            self.stream.close()
-            self.end()
-
-    def _callback(self, indata, outdata, frames, time, status):
-        assert frames == self._blocksize
-        if status.output_underflow:
-            print('Output underflow: increase blocksize', file=sys.stderr)
-            raise sd.CallbackAbort
-        if status.output_overflow:
-            print('Output overflow: increase buffersize', file=sys.stderr)
-            raise sd.CallbackAbort
-        assert not status
-        if not self._thread:
-            raise sd.CallbackStop
-
-        data = self.getData().reshape(-1, self._nchannels)
-        if len(data) < len(outdata):
-            outdata[:len(data)] = data
-            outdata[len(data):] = np.zeros(
-                len(outdata) - len(data)).reshape(-1, self._nchannels)
-            raise sd.CallbackStop
-        else:
-            outdata[:] = data
-
-
-class AudioPlayandRecord(AudioPlayer):
-    def __init__(self,
-                 playargs,
-                 path):
-        super().__init__(playargs)
+        self._data, _ = dataplay_loader(self.playargs)
         self.datarec = np.array([]).reshape(-1, 1)
         self.path = path # path to save the recorded data
         print(self.__dict__)
@@ -198,6 +186,57 @@ class AudioPlayandRecord(AudioPlayer):
         logger.info("Saved at {}".format(self.path))
 
 
+class AudioRecorder(Audio):
+    def __init__(self,
+                 playargs,
+                 path):
+        super().__init__(playargs)
+        self.datarec = np.array([]).reshape(-1, 1)
+        self.path = path # path to save the recorded data
+        self.stream = sd.InputStreamStream(
+            samplerate=self._sampling_rate,
+            blocksize=self._blocksize,
+            dtype=np.float32,
+            callback=self._callback,
+            finished_callback=self.event.set,
+        )
+        print(self.__dict__)
+
+    def _run(self):
+        try:
+            self.stream.start()
+            self.event.wait()
+
+        except queue.Full:
+            pass
+        except Exception as e:
+            print(type(e).__name__ + ': ' + str(e))
+        finally:
+            logger.info("End")
+            self.stream.stop()
+            self.stream.close()
+            self.end()
+
+    def _callback(self, indata, frames, time, status):
+        '''
+        record 
+        '''
+        assert frames == self._blocksize
+        if not self._thread:
+            raise sd.CallbackStop
+
+        self.datarec = np.append(self.datarec, indata.copy())
+
+    def get_record(self):
+        return self.datarec
+
+    def save_record(self):
+        # print(">" * 50 + "Saving..." + "<" * 50)
+        sf.write(self.path + ".wav", self.datarec, self._sampling_rate)  # PCM
+        savemat(self.path + ".mat", {"data_rec": self.datarec}) # MAT
+        logger.info("Saved at {}".format(self.path))
+
+
 class AcousticDataplayLoader():
     def __init__(self) -> None:
         pass
@@ -241,3 +280,5 @@ class AcousticDataplayLoader():
             self._dataplay = self.player()
         self._dataplay = self._dataplay.reshape(-1, play_arg.nchannels)
         return self._dataplay, self._dataseq
+
+
