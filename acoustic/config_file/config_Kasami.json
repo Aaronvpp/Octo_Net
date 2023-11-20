@@ -19,8 +19,8 @@
         "set_playAndRecord": true
     },
     "device_arg": {
-        "input_device": "micArray RAW SPK",
-        "output_device": "micArray RAW SPK"
+        "input_device": "MacBook Pro Microphone",
+        "output_device": "MacBook Pro Speakers"
     },
     "process_arg": {
         "num_topK_subcarriers": 50,

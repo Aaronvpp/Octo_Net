@@ -10,12 +10,17 @@ recorder = AudioRecorder(play_arg, path=global_arg.data_path)
 if recorder:
     logger.info("Start Recording ...")
     try:
+        print("Recording started. Press Ctrl+C to stop.")
+        recorder.begin()
         while True:
-            recorder.begin()
+            # Endless loop for recording. It will keep recording until KeyboardInterrupt is raised.
+            pass
     except KeyboardInterrupt:
-        logger.info("Stop Recorder ...")
+        # Stop recording when Ctrl+C is pressed
+        print("Recording stopped.")
         data_record = recorder.get_record()
+        print(f"Data shape: {data_record.shape}")
         if global_arg.set_save:
             recorder.save_record()
-        # player.end()
         recorder.end()
+        

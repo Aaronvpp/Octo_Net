@@ -295,3 +295,15 @@ class AcousticDataplayLoader():
         return self._dataplay, self._dataseq
 
 
+
+
+if __name__ == "__main__":
+    # Define your audio recording parameters here
+    playargs = None  # Replace None with actual arguments required for AudioRecorder
+
+    # Initialize the AudioRecorder
+    recorder = AudioRecorder(playargs)
+
+    
+        
+        # Optionally, you can add code here to save the recorded audio
