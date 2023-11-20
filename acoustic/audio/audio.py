@@ -12,9 +12,9 @@ import queue
 from scipy.io import savemat
 from loguru import logger
 
-from acoustic.audio.wave import FMCW
-from acoustic.audio.wave import Kasami_sequence
-import acoustic.utils as utils
+from audio.wave import FMCW
+from audio.wave import Kasami_sequence
+import utils as utils
 
 
 
@@ -193,7 +193,7 @@ class AudioRecorder(Audio):
         super().__init__(playargs)
         self.datarec = np.array([]).reshape(-1, 1)
         self.path = path # path to save the recorded data
-        self.stream = sd.InputStreamStream(
+        self.stream = sd.InputStream(
             samplerate=self._sampling_rate,
             blocksize=self._blocksize,
             dtype=np.float32,

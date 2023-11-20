@@ -1,11 +1,11 @@
 from config import play_arg, process_arg, global_arg
-from acoustic.audio.audio import AudioRecorder
+from audio.audio import AudioRecorder
 from time import sleep
 from loguru import logger
 
 logger.info("Delay {}s".format(global_arg.delay))
 sleep(global_arg.delay)
-recorder = AudioRecorder(play_arg)
+recorder = AudioRecorder(play_arg, path=global_arg.data_path)
 
 if recorder:
     logger.info("Start Recording ...")
