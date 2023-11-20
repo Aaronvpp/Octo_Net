@@ -9,6 +9,7 @@
         "wave": "Kasami",
         "frame_length":1023,
         "nchannels": 1,
+        "nbits": 10,
         "load_dataplay": false
     },
     "global_arg": {

@@ -6,6 +6,7 @@ from scipy import signal
 import matplotlib.pyplot as plt
 from scipy.signal import chirp
 import sys
+from loguru import logger
 
 
 class Wave():
@@ -64,16 +65,18 @@ class Wave():
 class Kasami_sequence(Wave):
     def __init__(self, playargs):
         self._parse_args(playargs)
+        
 
     def _parse_args(self, playargs):
-        self._bits = playargs.nbits
+        self._bits = int(playargs.nbits)
         self._channels = playargs.nchannels
         self._shape = playargs.frame_length
         self._iteration = playargs.iteration \
-            if playargs.iteration else 80
+            if playargs.iteration else 1
         self._amplitude = playargs.amplitude \
             if playargs.amplitude else 0.01
-
+        # logger.debug(f"Kasami: bits {self._bits}, channels {self._channels}, shape {self._shape}, iteration {self._iteration}, amplitude {self._amplitude}")
+        
     def _get_signal(self):
         return self.__call__()
 

@@ -43,6 +43,7 @@ class Audio:
 
     def getData(self):
         try:
+            # logger.debug(f"self._q.size(): {self._q.qsize()}")
             return self._q.get_nowait()
         except queue.Empty:
             print("Buffer is empty: increase buffersize", file=sys.stderr)
@@ -73,12 +74,19 @@ class AudioPlayer(Audio):
                  ):
         super(AudioPlayer, self).__init__(
             playargs)
-        self._data = None
-
+        self.load_audio_clip()
+        self.stream = sd.OutputStream(
+            samplerate=self._sampling_rate,
+            blocksize=self._blocksize,
+            dtype=np.float32,
+            callback=self._callback,
+            finished_callback=self.event.set,
+        )
         logger.debug("AudioPlayer::data_shape: {}".format(self._data.shape))
     
     def load_audio_clip(self):
         dataplay_loader = AcousticDataplayLoader()
+        logger.debug("Loading audio clip...")
         self._data, _ = dataplay_loader(self.playargs)
         
     def begin(self):
@@ -88,11 +96,20 @@ class AudioPlayer(Audio):
 
     def _run(self):
         try:
+            self.stream.start()
+            for _ in range(self._buffersize):
+                data = self._data[:self._blocksize].astype(np.float32)
+                self._q.put_nowait(data)
+                self._data = np.roll(self._data, -self._blocksize)
+                # assert ((self._data[-self._blocksize:] == 0).all())
+            # logger.debug(f"self._data.shape: {self._data.shape}")
+            timeout = self._blocksize * self._buffersize / self._sampling_rate
             while self._thread:
-                if self._data is None:
-                    self.load_audio_clip()
-                sd.play(self.audio_clip, self._sampling_rate)
-                self.audio_clip = None
+                data = self._data[:self._blocksize].astype(np.float32)
+                # logger.debug(f"data.shape: {data.shape}")
+                self._q.put(data, block=True, timeout=timeout)
+                self._data = np.roll(self._data, -self._blocksize)
+            # self.event.wait()
 
         except queue.Full:
             pass
@@ -100,9 +117,33 @@ class AudioPlayer(Audio):
             print(type(e).__name__ + ': ' + str(e))
         finally:
             logger.info("End")
-            sd.stop()
+            self.stream.stop()
+            self.stream.close()
+            self.end()
     
-    
+    def _callback(self, outdata, frames, time, status):
+        '''
+        record simutaneously while playing
+        '''
+        assert frames == self._blocksize, "frames: {}, blocksize: {}".format(frames, self._blocksize)
+        if status.output_underflow:
+            print('Output underflow: increase blocksize', file=sys.stderr)
+            raise sd.CallbackAbort
+        if status.output_overflow:
+            print('Output overflow: increase buffersize', file=sys.stderr)
+            raise sd.CallbackAbort
+        assert not status
+        if not self._thread:
+            raise sd.CallbackStop
+        data = self.getData().reshape(-1, self._nchannels)
+        # logger.debug(f"data.shape: {data.shape}")
+        if len(data) < len(outdata):
+            outdata[:len(data)] = data
+            outdata[len(data):] = np.zeros(
+                len(outdata) - len(data)).reshape(-1, self._nchannels)
+            raise sd.CallbackStop
+        else:
+            outdata[:] = data
 
  
             
@@ -261,6 +302,7 @@ class AcousticDataplayLoader():
             self._set_FMCW_player(play_arg)
 
     def _set_Kasami_player(self, play_arg):
+        logger.debug("Set Kasami player")
         self.player = Kasami_sequence(play_arg)
 
     def _set_FMCW_player(self, play_arg):

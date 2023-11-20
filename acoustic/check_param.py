@@ -80,7 +80,9 @@ def set_and_check_wave(play_arg):
     if hasattr(play_arg, "duration") and play_arg.duration > 0:
         play_arg.iteration = play_arg.duration * \
             play_arg.sampling_rate // play_arg.length
-
+    else:
+        setattr(play_arg, "iteration", 5)
+        
     if hasattr(play_arg, "delay_num") and play_arg.delay_num > 0:
         play_arg.length += play_arg.delay_num
 
