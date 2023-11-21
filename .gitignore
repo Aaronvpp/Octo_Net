@@ -1,3 +1,9 @@
+__MACOSX/
+__pycache__
+.git-bk
+.vscode
+
+
 Audio_Collector
 IRA/data
 IRA/logs
@@ -5,7 +11,7 @@ mmwave
 SeekTermal
 seekcamera-python/runseek/data
 seekcamera-python/runseek/logs
-output_*
+*output*
 *.pkl
 *.log
 *.mp4
