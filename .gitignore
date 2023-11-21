@@ -19,3 +19,5 @@ polar/H10/data
 polar/H10/logs
 process_dict.json
 status.json
+acoustic/data/
+data/

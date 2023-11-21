@@ -51,18 +51,22 @@ def set_and_check_wave(play_arg):
     assert (hasattr(play_arg, "frame_length")
             and play_arg.frame_length != None)
     assert (hasattr(play_arg, "nchannels") and play_arg.nchannels > 0)
-    assert (hasattr(play_arg, "duration") and play_arg.duration > 0)
+    # assert (hasattr(play_arg, "duration") and play_arg.duration > 0)
 
     play_arg.samples_per_time = play_arg.frame_length
-    if hasattr(play_arg, "modulation"):
+    if hasattr(play_arg, "modulation") and play_arg.modulation:
         assert (hasattr(play_arg, "N_padding") and play_arg.N_padding != None)
         assert (hasattr(play_arg, "fc") and play_arg.fc != None)
         play_arg.samples_per_time = play_arg.N_padding
-
+    else:
+        setattr(play_arg, "N_padding", 0)
     play_arg.length = max(play_arg.frame_length, play_arg.N_padding)
 
     if not hasattr(play_arg, "bandwidth"):
-        bandwidth = play_arg.frame_length * play_arg.sampling_rate / play_arg.N_padding
+        if play_arg.N_padding == 0:
+            bandwidth = play_arg.sampling_rate // 2
+        else:
+            bandwidth = play_arg.frame_length * play_arg.sampling_rate / play_arg.N_padding
         setattr(play_arg, "bandwidth", bandwidth)
 
     if hasattr(play_arg, "idle") and play_arg.idle > 0:
@@ -73,9 +77,12 @@ def set_and_check_wave(play_arg):
     else:
         play_arg.channel_rate = ceil(play_arg.sampling_rate / play_arg.length)
 
-    play_arg.iteration = play_arg.duration * \
-        play_arg.sampling_rate // play_arg.length
-
+    if hasattr(play_arg, "duration") and play_arg.duration > 0:
+        play_arg.iteration = play_arg.duration * \
+            play_arg.sampling_rate // play_arg.length
+    else:
+        setattr(play_arg, "iteration", 5)
+        
     if hasattr(play_arg, "delay_num") and play_arg.delay_num > 0:
         play_arg.length += play_arg.delay_num
 
