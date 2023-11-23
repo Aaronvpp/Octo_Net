@@ -22,6 +22,8 @@ process_dict = {
     "MMWave": {"pid": None},
     "SeekThermal": {"pid": None},
     "Polar": {"pid": None},
+    "Acoustic Recorder": {"pid": None},
+    "Acoustic Player": {"pid": None},
 }
 
 process_dict_file = "process_dict.json"

@@ -81,6 +81,8 @@ process_dict = {
     "MMWave": {"pid": None},
     "SeekThermal": {"pid": None},
     "Polar": {"pid": None},
+    "Acoustic Recorder": {"pid": None},
+    "Acoustic Player": {"pid": None},
 }
 
 # def update_modality_status(status_placeholder):
@@ -239,7 +241,7 @@ config.set("label_info", "activity", activity_label)
 st.subheader("Device Settings")
 
 # Create columns for each device
-col1, col2, col3, col4, col5 = st.columns(5)
+col1, col2, col3, col4, col5, col6 = st.columns(6)
 
 # IRA device settings
 with col1:
@@ -408,6 +410,84 @@ with col5:
     #         os.remove("terminate_polar_flag.txt")
     #         st.write("Polar modality is ended.")
 
+with col6:
+    st.markdown("**Acoustic Recorder Settings**")
+    # Play Arguments
+    sampling_rate = st.number_input("Sampling Rate", value=config.getint("play_arg", "sampling_rate"))
+    amplitude = st.selectbox("Amplitude", options=[0.1, 0.3, 0.5, 1, 2, 2.5], index=[0.1, 0.3, 0.5, 1, 2, 2.5].index(config.getfloat("play_arg", "amplitude")))
+    blocksize = st.number_input("Block Size", value=config.getint("play_arg", "blocksize"))
+    buffersize = st.number_input("Buffer Size", value=config.getint("play_arg", "buffersize"))
+    modulation = st.checkbox("Modulation", value=config.getboolean("play_arg", "modulation"))
+    idle = st.number_input("Idle", value=config.getint("play_arg", "idle"))
+    wave = st.selectbox("Wave", options=["Kasami", "chirp", "ZC"], index=["Kasami", "chirp", "ZC"].index(config.get("play_arg", "wave")))
+    frame_length = st.number_input("Frame Length", value=config.getint("play_arg", "frame_length"))
+    nchannels = st.number_input("Channels", value=config.getint("play_arg", "nchannels"))
+    nbits = st.number_input("Bits", value=config.getint("play_arg", "nbits"))
+    # load_dataplay = st.checkbox("Load Data Play", value=config.getboolean("play_arg", "load_dataplay"))
+
+    # Global Arguments
+    delay = st.number_input("Delay", value=config.getint("global_arg", "delay"))
+    task = st.text_input("Task", config.get("global_arg", "task"))
+    save_root = st.text_input("Save Root", config.get("global_arg", "save_root"))
+    # set_save = st.checkbox("Set Save", value=config.getboolean("global_arg", "set_save"))
+
+    # Device Arguments
+    input_device = st.selectbox("Input Device", options=["default"], index=0) # Modify as needed for actual device options
+    output_device = st.selectbox("Output Device", options=["default"], index=0) # Modify as needed for actual device options
+
+    config.set("play_arg", "sampling_rate", str(sampling_rate))
+    config.set("play_arg", "amplitude", str(amplitude))
+    config.set("play_arg", "blocksize", str(blocksize))
+    config.set("play_arg", "buffersize", str(buffersize))
+    config.set("play_arg", "modulation", str(modulation))
+    config.set("play_arg", "idle", str(idle))
+    config.set("play_arg", "wave", wave)
+    config.set("play_arg", "frame_length", str(frame_length))
+    config.set("play_arg", "nchannels", str(nchannels))
+    config.set("play_arg", "nbits", str(nbits))
+    config.set("global_arg", "delay", str(delay))
+    config.set("global_arg", "task", task)
+    config.set("global_arg", "save_root", save_root)
+    config.set("device_arg", "input_device", input_device)
+    config.set("device_arg", "output_device", output_device)
+
+    with open(ini_file_path, 'w') as configfile:
+        config.write(configfile)
+    
+    # Update JSON file
+    json_data = {
+        "play_arg": {
+            "sampling_rate": sampling_rate,
+            "amplitude": amplitude,
+            "blocksize": blocksize,
+            "buffersize": buffersize,
+            "modulation": modulation,
+            "idle": idle,
+            "wave": wave,
+            "frame_length": frame_length,
+            "nchannels": nchannels,
+            "nbits": nbits,
+            "load_dataplay": False  # Set default or retrieve from config
+        },
+        "global_arg": {
+            "delay": delay,
+            "task": task,
+            "save_root": save_root,
+            "set_save": True,  # Set default or retrieve from config
+            "set_playAndRecord": True
+        },
+        "device_arg": {
+            "input_device": input_device,
+            "output_device": output_device
+        },
+        "process_arg": {
+            "num_topK_subcarriers": 50,
+            "windows_time": 2
+        }
+    }
+
+    with open("./acoustic/config_file/config_Kasami.json", 'w') as json_file:
+        json.dump(json_data, json_file, indent=4)
 
 # Add checkboxes for each modality
 st.subheader("Select Modalities to Start")
@@ -416,6 +496,8 @@ start_depth_camera = st.checkbox("Start Depth Camera")
 start_mmwave = st.checkbox("Start MMWave")
 start_seekthermal = st.checkbox("Start Seek Thermal")
 start_polar = st.checkbox("Start Polar")
+start_acoustic_recorder = st.checkbox("Start Acoustic Recorder")
+start_acoustic_player = st.checkbox("Start Acoustic Player")
 
 st.write("Reminder: As a Node, the configs above maybe overwritten by the Center Server. Please refresh this page if you want to edit the configs of this node.")
 # print("st.session_state.start_flag222", st.session_state.start_flag)
@@ -488,7 +570,21 @@ if st.button("Save and Run") or st.session_state.start_flag == True:
         logger.info(f"Seekthermal starts recording")
         processes.append(process)
 
-    
+    if start_acoustic_recorder:
+        if start_polar:  
+            wait_for_polar_ready()
+        process = subprocess.Popen(["python", "acoustic/recorder.py", "json", "./acoustic/config_file/config_Kasami.json"], cwd="/home/aiot-mini/code/")
+        process_dict["Acoustic Recorder"]["pid"] = process.pid
+        logger.info("Acoustic Recorder starts recording")
+        processes.append(process)
+
+    if start_acoustic_player:
+        if start_polar:  
+            wait_for_polar_ready()
+        process = subprocess.Popen(["python", "acoustic/player.py", "json", "./acoustic/config_file/config_Kasami.json"], cwd="/home/aiot-mini/code/")
+        process_dict["Acoustic Player"]["pid"] = process.pid
+        logger.info("Acoustic Player starts playing")
+        processes.append(process)
 
     with open("process_dict.json", "w") as f:
         json.dump(process_dict, f)
@@ -564,7 +660,7 @@ if st.button("Terminate All") or st.session_state.terminate_flag == True:
         st.write("All processes are terminated.")
 
     # Metric
-    col1, col2, col3, col4, col5 = st.columns(5)
+    col1, col2, col3, col4, col5, col6 = st.columns(6)
  
     # Reporting where the data and log is stored.
     ira_status_path = os.path.join("IRA", "ira_data_saved_status.txt")
@@ -632,6 +728,21 @@ if st.button("Terminate All") or st.session_state.terminate_flag == True:
         st.success(polar_data_saved_status)
         col5.metric("Polar data", f"{current_index}", "1 pickle file saved")
         os.remove(polar_status_path)
+
+    # # Acoustic modality status
+    # acoustic_status_path = os.path.join("acoustic", "acoustic_data_saved_status.txt")
+    # if os.path.exists(acoustic_status_path):
+    #     with open(acoustic_status_path, "r") as f:
+    #         acoustic_data_saved_status = f.read()
+    #     # Extract current_index using regex
+    #     current_index_match = re.search(r"output_(\d+).pickle", acoustic_data_saved_status)
+    #     if current_index_match:
+    #         current_index = int(current_index_match.group(1))
+    #         current_index += 1  # Increment the current index
+    #     col6.metric("Acoustic data", f"{current_index}", "1 pickle file saved")
+    #     st.success(acoustic_data_saved_status)
+    #     os.remove(acoustic_status_path)
+
 
     st.session_state.terminate_flag = False
         

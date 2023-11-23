@@ -1,5 +1,7 @@
 import os
-
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from time_utils import *
 
 class IndexManager():
     '''
@@ -26,12 +28,13 @@ class IndexManager():
         if not hasattr(global_arg, "rec_idx"):
             self.rec_idx = self._get_rec_idx()
             import time
+            ntp_time, time_difference = get_ntp_time_and_difference()
             name_kwargs = {
                 "task": global_arg.task,
                 "wave": play_arg.wave,
                 "input_device": device_arg.input_device,
                 "output_device": device_arg.output_device,
-                "time": time.strftime("%Y%m%d-%H%M%S"),
+                "time": ntp_time,
                 "rec_idx": self.rec_idx
             }
             self.name = self._construct_save_name(**name_kwargs)

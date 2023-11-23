@@ -122,7 +122,7 @@ config.set("label_info", "activity", activity_label)
 st.subheader("Device Settings")
 
 # Create columns for each device
-col1, col2, col3, col4, col5 = st.columns(5)
+col1, col2, col3, col4, col5, col6 = st.columns(6)
 
 # IRA device settings
 with col1:
@@ -276,6 +276,81 @@ with col5:
     
     config.set("device_settings", "polar", json.dumps(polar_json))
 
+with col6:
+    st.markdown("**Acoustic Recorder Settings**")
+    # Play Arguments
+    sampling_rate = st.number_input("Sampling Rate", value=config.getint("play_arg", "sampling_rate"))
+    amplitude = st.selectbox("Amplitude", options=[0.1, 0.3, 0.5, 1, 2, 2.5], index=[0.1, 0.3, 0.5, 1, 2, 2.5].index(config.getfloat("play_arg", "amplitude")))
+    blocksize = st.number_input("Block Size", value=config.getint("play_arg", "blocksize"))
+    buffersize = st.number_input("Buffer Size", value=config.getint("play_arg", "buffersize"))
+    modulation = st.checkbox("Modulation", value=config.getboolean("play_arg", "modulation"))
+    idle = st.number_input("Idle", value=config.getint("play_arg", "idle"))
+    wave = st.selectbox("Wave", options=["Kasami", "chirp", "ZC"], index=["Kasami", "chirp", "ZC"].index(config.get("play_arg", "wave")))
+    frame_length = st.number_input("Frame Length", value=config.getint("play_arg", "frame_length"))
+    nchannels = st.number_input("Channels", value=config.getint("play_arg", "nchannels"))
+    nbits = st.number_input("Bits", value=config.getint("play_arg", "nbits"))
+    # load_dataplay = st.checkbox("Load Data Play", value=config.getboolean("play_arg", "load_dataplay"))
+
+    # Global Arguments
+    delay = st.number_input("Delay", value=config.getint("global_arg", "delay"))
+    task = st.text_input("Task", config.get("global_arg", "task"))
+    save_root = st.text_input("Save Root", config.get("global_arg", "save_root"))
+    # set_save = st.checkbox("Set Save", value=config.getboolean("global_arg", "set_save"))
+
+    # Device Arguments
+    input_device = st.selectbox("Input Device", options=["default"], index=0) # Modify as needed for actual device options
+    output_device = st.selectbox("Output Device", options=["default"], index=0) # Modify as needed for actual device options
+
+    config.set("play_arg", "sampling_rate", str(sampling_rate))
+    config.set("play_arg", "amplitude", str(amplitude))
+    config.set("play_arg", "blocksize", str(blocksize))
+    config.set("play_arg", "buffersize", str(buffersize))
+    config.set("play_arg", "modulation", str(modulation))
+    config.set("play_arg", "idle", str(idle))
+    config.set("play_arg", "wave", wave)
+    config.set("play_arg", "frame_length", str(frame_length))
+    config.set("play_arg", "nchannels", str(nchannels))
+    config.set("play_arg", "nbits", str(nbits))
+    config.set("global_arg", "delay", str(delay))
+    config.set("global_arg", "task", task)
+    config.set("global_arg", "save_root", save_root)
+    config.set("device_arg", "input_device", input_device)
+    config.set("device_arg", "output_device", output_device)
+
+    with open(ini_file_path, 'w') as configfile:
+        config.write(configfile)
+    
+    # Update JSON file
+    json_data = {
+        "play_arg": {
+            "sampling_rate": sampling_rate,
+            "amplitude": amplitude,
+            "blocksize": blocksize,
+            "buffersize": buffersize,
+            "modulation": modulation,
+            "idle": idle,
+            "wave": wave,
+            "frame_length": frame_length,
+            "nchannels": nchannels,
+            "nbits": nbits,
+            "load_dataplay": False  # Set default or retrieve from config
+        },
+        "global_arg": {
+            "delay": delay,
+            "task": task,
+            "save_root": save_root,
+            "set_save": True,  # Set default or retrieve from config
+            "set_playAndRecord": True
+        },
+        "device_arg": {
+            "input_device": input_device,
+            "output_device": output_device
+        },
+        "process_arg": {
+            "num_topK_subcarriers": 50,
+            "windows_time": 2
+        }
+    }
 
 
 if st.button("Mode 2: Overwrite nodes' configs and Run"):
