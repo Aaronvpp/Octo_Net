@@ -15,7 +15,17 @@ from loguru import logger
 from audio.wave import FMCW
 from audio.wave import Kasami_sequence
 import utils as utils
+import math
 
+# To see the size of the saved pickle
+def convert_size(size_bytes):
+    if size_bytes == 0:
+        return "0B"
+    size_name = ("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
+    i = int(math.floor(math.log(size_bytes, 1024)))
+    p = math.pow(1024, i)
+    s = round(size_bytes / p, 2)
+    return f"{s} {size_name[i]}"
 
 
 class Audio:
@@ -287,6 +297,13 @@ class AudioRecorder(Audio):
     def save_record(self):
         # print(">" * 50 + "Saving..." + "<" * 50)
         sf.write(self.path + ".wav", self.datarec, self._sampling_rate)  # PCM
+        file_size = os.path.getsize(self.path + ".wav")
+        human_readable_size = convert_size(file_size)
+        if file_size is not None:
+            with open(os.path.join(os.path.dirname(__file__), "acoustic_data_saved_status.txt"), "w") as f:
+                f.write(f"File can be found at{self.path}. \n")
+                f.write(f"File size of {self.path}.wav is: {human_readable_size} \n")
+                logger.info(f"File size written to {f}")
         savemat(self.path + ".mat", {"data_rec": self.datarec}) # MAT
         logger.info("Saved at {}".format(self.path))
 

@@ -410,8 +410,10 @@ def main():
                     print(f"NTP_Server_timestamp:, {fake_ntp_timestamp}")
                     # Save frame data and timestamp
                     
-                    output_str = f"Ambient Temperature: {Ambient_temperature} | Detected Temperature:{Detected_temperature}"
-                    save_timestamp_data_modified(output_str, fake_ntp_timestamp, f)
+                    # output_str = f"Ambient Temperature: {Ambient_temperature} | Detected Temperature:{Detected_temperature}"
+                    # save_timestamp_data_modified(output_str, fake_ntp_timestamp, f)
+                    data_dict = {"timestamp": fake_ntp_timestamp, "Ambient_Temperature": Ambient_temperature, "Detected_Temperature": Detected_temperature}
+                    pickle.dump(data_dict, f)
                 except:
                     logger.error("Error")
                 

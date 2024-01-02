@@ -7,6 +7,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from time_utils import *
 from log_utils import *
+from save_timestamp_data import *
 from sampling_rate import SamplingRateCalculator
 import configparser
 import json
@@ -64,6 +65,9 @@ logger.info(f"Loaded configuration: {config_data}")
 logger.info(f"Loaded DepthCam configuration: {depth_settings}")
 depth_cam_settings_str = config.get('device_settings', 'depth_cam')
 depth_cam_settings = json.loads(depth_cam_settings_str)
+# Extract the min and max depth distance values
+min_depth_distance = float(depth_cam_settings.get('min_depth_distance', '0'))
+max_depth_distance = float(depth_cam_settings.get('max_depth_distance', '5'))
 # Get the resolution values
 resolution = depth_cam_settings.get('resolution', "640x480").split("x")
 width = int(resolution[0])
@@ -82,6 +86,9 @@ color_fps = int(depth_cam_settings.get('color_fps', 30))
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 rgb_video_filename = os.path.join(rgb_output_path, 'rgb_video.mp4')
 rgb_video_writer = cv2.VideoWriter(rgb_video_filename, fourcc, color_fps, (width, height))
+# Define the codec and create VideoWriter objects for depth video
+depth_video_filename = os.path.join(depth_output_path, 'depth_video.mp4')
+depth_video_writer = cv2.VideoWriter(depth_video_filename, fourcc, depth_fps, (width, height))
 
 # Configure depth and color streams
 pipeline = rs.pipeline()
@@ -121,100 +128,121 @@ frame_number = 0
 rgb_video_timestamps = []
 depth_image_timestamps = []
 timeflag = True
+#for testing the MSE
+# Initialize a list to store the frames
+#all_depth_frames = []
 try:
  
     file_path = os.path.join(depth_output_path, f'output_{index}.pickle')
-    with open(file_path, 'ab') as f:
-        while True:
-            # Wait for a coherent pair of frames: depth and color
-            frames = pipeline.wait_for_frames()
-            depth_frame = frames.get_depth_frame()
-            color_frame = frames.get_color_frame()
-            if not depth_frame or not color_frame:
-                continue
+    #with open(file_path, 'ab') as f:
+    while True:
+        # Wait for a coherent pair of frames: depth and color
+        frames = pipeline.wait_for_frames()
+        depth_frame = frames.get_depth_frame()
+        color_frame = frames.get_color_frame()
+        if not depth_frame or not color_frame:
+            continue
 
-            # Convert images to numpy arrays
-            depth_image = np.asanyarray(depth_frame.get_data())
-            color_image = np.asanyarray(color_frame.get_data())
+        # Convert images to numpy arrays
+        depth_image = np.asanyarray(depth_frame.get_data())
+        color_image = np.asanyarray(color_frame.get_data())
 
-            real_depth = depth_image * depth_scale
-            print(real_depth[200,200])
-            # Save this
-            # print("real_depth", real_depth)
-            # print("max _depth:", real_depth.max())
-            # Flatten the matrix into a 1D array
-            # flattened_matrix = real_depth.flatten()
+        real_depth = depth_image * depth_scale
+        print(real_depth[200,200])
+        # Save this
+        # print("real_depth", real_depth)
+        # print("max _depth:", real_depth.max())
+        # Flatten the matrix into a 1D array
+        # flattened_matrix = real_depth.flatten()
 
-            # Sort the flattened array in descending order
-            # sorted_array = np.sort(flattened_matrix)[::-1]
+        # Sort the flattened array in descending order
+        # sorted_array = np.sort(flattened_matrix)[::-1]
 
-            # Print the maximum 10 elements
-            # print(sorted_array[:20])
-            # Apply colormap on depth image (image must be converted to 8-bit per pixel first)
-            depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
+        # Print the maximum 10 elements
+        # print(sorted_array[:20])
+        # Apply colormap on depth image (image must be converted to 8-bit per pixel first)
+        depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
 
-            # Write the RGB frame to the MP4 video file
-            rgb_video_writer.write(color_image)
+        # Write the RGB frame to the MP4 video file
+        rgb_video_writer.write(color_image)
 
-            # Convert the depth_image to grayscale
-            depth_image_gray = cv2.convertScaleAbs(depth_image, alpha=0.03)
+        # Convert the depth_image to grayscale
+        depth_image_gray = cv2.convertScaleAbs(depth_image, alpha=0.03)
 
-            # # Save the grayscale depth_image as a pickle file
-            # pickle_filename = f'depth_image_{frame_number:04d}.pkl'
-            # pickle_filepath = os.path.join(depth_output_path, pickle_filename)
-            # with open(pickle_filepath, 'wb') as f:
-            #     pickle.dump(real_depth, f)
-            
-            if timeflag:
-                ntp_time, time_difference = get_ntp_time_and_difference()
-                fake_ntp_timestamp = ntp_time
-                logger.info("Using NTP time as the start timmer.")
-                timeflag = False
-            else:
-                current_local_time = datetime.now()
-                fake_ntp_timestamp = get_fake_ntp_time(current_local_time, time_difference)
-                logger.info("Using the local timmer to pretend to be NTP time. Data recorded")
-            # Create a dictionary containing the timestamp and frame data
-            depth_img = {
-                'timestamp': fake_ntp_timestamp,
-                'depth_image': real_depth
-            }
+        # # Save the grayscale depth_image as a pickle file
+        # pickle_filename = f'depth_image_{frame_number:04d}.pkl'
+        # pickle_filepath = os.path.join(depth_output_path, pickle_filename)
+        # with open(pickle_filepath, 'wb') as f:
+        #     pickle.dump(real_depth, f)
+        
+        if timeflag:
+            ntp_time, time_difference = get_ntp_time_and_difference()
+            fake_ntp_timestamp = ntp_time
+            logger.info("Using NTP time as the start timmer.")
+            timeflag = False
+        else:
+            current_local_time = datetime.now()
+            fake_ntp_timestamp = get_fake_ntp_time(current_local_time, time_difference)
+            logger.info("Using the local timmer to pretend to be NTP time. Data recorded")
+        # Create a dictionary containing the timestamp and frame data
+        # depth_img = {
+        #     'timestamp': fake_ntp_timestamp,
+        #     'depth_image': real_depth
+        # }
 
-            # Save the dictionary to a pickle file
-    
-            save_timestamp_data_modified(real_depth, fake_ntp_timestamp, f)
-            # Save frame data and timestamp
-            # print("fake_ntp_timestamp", fake_ntp_timestamp)
+        # Save the dictionary to a pickle file
 
-            # To calculate the actual sampling rate
-            sampler.update_loop()
-            # Calculate the total frame
-            frame_counter += 1
-            # Append the timestamp to the respective lists
-            depth_image_timestamps.append(fake_ntp_timestamp)
-            rgb_video_timestamps.append(fake_ntp_timestamp)
-            # Increment the frame number
-            frame_number += 1
+        #save_timestamp_data_modified(real_depth, fake_ntp_timestamp, f)
+        # Save frame data and timestamp
+        # print("fake_ntp_timestamp", fake_ntp_timestamp)
+        # Filter out temperature values outside the range [min_temp, max_temp]
+        real_depth_filtered = np.clip(real_depth, min_depth_distance, max_depth_distance)
+        # Append the filtered frame to the list(for testing purposes)
+        #all_depth_frames.append(real_depth_filtered)
+        # Normalize to the range [0, 255]
+        depth_normalized = cv2.normalize(real_depth_filtered, None, 0, 255, cv2.NORM_MINMAX)
 
-            # Show images
-            cv2.namedWindow('RealSense', cv2.WINDOW_AUTOSIZE)
-            cv2.imshow('RealSense', np.hstack((color_image, depth_colormap)))
-            cv2.waitKey(1)
-            if cv2.waitKey(1) == 27 or check_terminate_flag():
-                logger.info("End recording by a terminate action.")
-                # Check the size of the saved MP4 video and pickle file
-                mp4_size = os.path.getsize(rgb_video_filename)
-                human_readable_mp4_size = convert_size(mp4_size)
-                pickle_size = os.path.getsize(file_path)
-                human_readable_size = convert_size(pickle_size)
-                with open(os.path.join(os.path.dirname(__file__), "deptcam_data_saved_status.txt"), "w") as f:
-                        f.write(f"Deptcam Data saved /DeptCam/output_{index}/depth_image_output_{index}.pickle,\n")
-                        f.write(f"RBG video saved /DeptCam/output_{index}/rgb_video_output_{index}/rgb_video.mp4,\n")
-                        f.write(f"Depthcam Log saved /DeptCam/logs/config_{index}.log\n")
-                        f.write(f"Total frames processed: {frame_counter},\n")
-                        f.write(f"DepthCam Pickle file size: {human_readable_size},\n")
-                        f.write(f"RGB Video file size: {human_readable_mp4_size}.\n")
-                break
+        # Convert to 8-bit format
+        depth_8bit = np.uint8(depth_normalized)
+
+        # Write the processed depth frame to the MP4 video file
+        depth_video_writer.write(cv2.cvtColor(depth_8bit, cv2.COLOR_GRAY2BGR))
+        # To calculate the actual sampling rate
+        sampler.update_loop()
+        # Calculate the total frame
+        frame_counter += 1
+        # Append the timestamp to the respective lists
+        depth_image_timestamps.append(fake_ntp_timestamp)
+        rgb_video_timestamps.append(fake_ntp_timestamp)
+        # Increment the frame number
+        frame_number += 1
+
+        # Show images
+        # cv2.namedWindow('RealSense', cv2.WINDOW_AUTOSIZE)
+        # cv2.imshow('RealSense', np.hstack((color_image, depth_colormap)))
+        # cv2.waitKey(1)
+        if cv2.waitKey(1) == 27 or check_terminate_flag():
+            # After the loop, save all frames in one .npy file(for testing purposes)
+            # npy_filepath = os.path.join(depth_output_path, f'all_depth_frames_{index}.npy')
+            # np.save(npy_filepath, np.array(all_depth_frames))
+            # save all frames in one .npy file(for testing purposes)
+            logger.info("End recording by a terminate action.")
+            # Check the size of the saved MP4 video and pickle file
+            mp4_size = os.path.getsize(rgb_video_filename)
+            mp4_depth_size = os.path.getsize(depth_video_filename)
+            human_readable_mp4_size = convert_size(mp4_size)
+            human_readable_mp4_depth_size = convert_size(mp4_depth_size)
+            #pickle_size = os.path.getsize(file_path)
+            #human_readable_size = convert_size(pickle_size)
+            with open(os.path.join(os.path.dirname(__file__), "deptcam_data_saved_status.txt"), "w") as f:
+                    #f.write(f"Deptcam Data saved /DeptCam/output_{index}/depth_image_output_{index}.pickle,\n")
+                    f.write(f"RBG video saved /DeptCam/output_{index}/rgb_video_output_{index}/rgb_video.mp4,\n")
+                    f.write(f"Depthcam Log saved /DeptCam/logs/config_{index}.log\n")
+                    f.write(f"Total frames processed: {frame_counter},\n")
+                    #f.write(f"DepthCam Pickle file size: {human_readable_size},\n")
+                    f.write(f"DepthCam video file size: {human_readable_mp4_depth_size},\n")
+                    f.write(f"RGB Video file size: {human_readable_mp4_size}.\n")
+            break
     # while True:
     #     # Wait for a coherent pair of frames: depth and color
     #     frames = pipeline.wait_for_frames()
@@ -295,7 +323,7 @@ try:
 
     # Release the video writer
     rgb_video_writer.release()
-
+    depth_video_writer.release()
 finally:
     # Save the timestamp lists to separate files
     with open(os.path.join(main_output_path, 'timestamps.txt'), 'w') as f:

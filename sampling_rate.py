@@ -55,4 +55,4 @@ class SamplingRateCalculator:
             with open(os.path.abspath(os.path.join(os.path.dirname(__file__), "status.json")), "w") as f:
                 json.dump(status_dict, f)
         else:
-            print(f"Error: {self.process_name} not found in status.json")
+            print("Error: {} not found in status.json",format(self.process_name))

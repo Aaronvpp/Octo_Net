@@ -1,6 +1,6 @@
 import logging
 import os
-from save_timestamp_data import *
+# from save_timestamp_data import *
 from time_utils import *
 
 
@@ -23,7 +23,7 @@ def setup_logger(output_directory, index):
     if not os.path.exists(log_directory):
         os.makedirs(log_directory)
 
-    log_filename = os.path.join(log_directory, f'config_{index}.log')
+    log_filename = os.path.join(log_directory, 'config_{}.log'.format(index))  # Changed to use format
 
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
@@ -41,10 +41,10 @@ def setup_logger_global(output_directory, index):
     if not os.path.exists(log_directory):
         os.makedirs(log_directory)
 
-    log_filename = os.path.join(log_directory, f'config_{index}.log')
+    log_filename = os.path.join(log_directory, 'config_{}.log'.format(index))
 
     # Create a unique logger name using the index
-    logger_name = f"global_logger_{index}"
+    logger_name = "global_logger_{}".format(index)
     
     # Check if the logger already exists, if so return the existing logger
     if logger_name in logging.root.manager.loggerDict:

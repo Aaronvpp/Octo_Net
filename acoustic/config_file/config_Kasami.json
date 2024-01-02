@@ -1,7 +1,7 @@
 {
     "play_arg": {
         "sampling_rate": 48000,
-        "amplitude": 0.1,
+        "amplitude": 1,
         "blocksize": 1024,
         "buffersize": 32,
         "modulation": false,
@@ -20,8 +20,8 @@
         "set_playAndRecord": true
     },
     "device_arg": {
-        "input_device": "default",
-        "output_device": "default"
+        "input_device": "micArray RAW SPK",
+        "output_device": "micArray RAW SPK"
     },
     "process_arg": {
         "num_topK_subcarriers": 50,

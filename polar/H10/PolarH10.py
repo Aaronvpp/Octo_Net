@@ -205,7 +205,7 @@ class PolarH10:
 
     async def connect(self):
         self.bleak_client = BleakClient(self.bleak_device)
-        await self.bleak_client.connect(timeout=20.0)
+        await self.bleak_client.connect(timeout=40.0)
 
     async def disconnect(self):
         await self.bleak_client.disconnect()

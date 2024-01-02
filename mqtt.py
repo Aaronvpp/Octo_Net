@@ -165,7 +165,8 @@ with col2:
     depth_cam_data_storage_location = st.text_input("Data Storage Location", depth_cam_json["Data storage location"])
     depth_cam_depth_datatype = st.text_input("Depth_Datatype", depth_cam_json["Depth_Datatype"])
     depth_cam_rgb_datatype = st.text_input("RGB_Datatype", depth_cam_json["RGB_Datatype"])
-
+    depth_cam_min_depth = st.text_input("Minimum Depth Distance (meters)", depth_cam_json.get("min_depth_distance", "0"))
+    depth_cam_max_depth = st.text_input("Maximum Depth Distance (meters)", depth_cam_json.get("max_depth_distance", "5"))
 
     
     depth_cam_json["resolution"] = depth_cam_resolution
@@ -176,6 +177,8 @@ with col2:
     depth_cam_json["Data storage location"] = depth_cam_data_storage_location
     depth_cam_json["Depth_Datatype"] = depth_cam_depth_datatype
     depth_cam_json["RGB_Datatype"] = depth_cam_rgb_datatype
+    depth_cam_json["min_depth_distance"] = depth_cam_min_depth
+    depth_cam_json["max_depth_distance"] = depth_cam_max_depth
     config.set("device_settings", "depth_cam", json.dumps(depth_cam_json))
 
     # if st.button("Start depthcamera"):
@@ -205,6 +208,8 @@ with col3:
     seekthermal_temperature_unit = st.text_input("Temperature Unit", seekthermal_json["temperature_unit"])
     seekthermal_data_storage_location = st.text_input("Data Storage Location", seekthermal_json["Data storage location"])
     seekthermal_datatype = st.text_input("seekthermal_Datatype", seekthermal_json["seekthermal_Datatype"])
+    seekthermal_min_temp = st.text_input("min_temp", seekthermal_json["min_temp"])
+    seekthermal_max_temp= st.text_input("max_temp", seekthermal_json["max_temp"])
 
     seekthermal_json["port"] = seekthermal_port
     seekthermal_json["frame_rate"] = seekthermal_frame_rate
@@ -214,6 +219,8 @@ with col3:
     seekthermal_json["temperature_unit"] = seekthermal_temperature_unit
     seekthermal_json["Data storage location"] = seekthermal_data_storage_location
     seekthermal_json["seekthermal_Datatype"] = seekthermal_datatype
+    seekthermal_json["min_temp"] = seekthermal_min_temp
+    seekthermal_json["max_temp"] = seekthermal_max_temp
     config.set("device_settings", "seekthermal", json.dumps(seekthermal_json))
 
     # if st.button("Start SeekThermal Camera"):
@@ -234,13 +241,13 @@ with col3:
 with col4:
     st.markdown("**MMWave**")
     mmwave_json = json.loads(config.get("device_settings", "mmwave"))
-    mmwave_setting1 = st.text_input("Setting 1", mmwave_json["setting1"])
-    mmwave_setting2 = st.text_input("Setting 2", mmwave_json["setting2"])
+    # mmwave_setting1 = st.text_input("Setting 1", mmwave_json["setting1"])
+    # mmwave_setting2 = st.text_input("Setting 2", mmwave_json["setting2"])
     mmwave_data_storage_location = st.text_input("Data Storage Location", mmwave_json["Data storage location"])
     mmwave_datatype = st.text_input("mmwave_Datatype", mmwave_json["mmwave_Datatype"])
 
-    mmwave_json["setting1"] = mmwave_setting1
-    mmwave_json["setting2"] = mmwave_setting2
+    # mmwave_json["setting1"] = mmwave_setting1
+    # mmwave_json["setting2"] = mmwave_setting2
     mmwave_json["Data storage location"] = mmwave_data_storage_location
     mmwave_json["mmwave_Datatype"] = mmwave_datatype
     
@@ -262,19 +269,19 @@ with col4:
     #         st.write("MMWave modality is ended.")
 
 with col5:
-    st.markdown("**Polar**")
-    polar_json = json.loads(config.get("device_settings", "polar"))
-    polar_record_len = st.text_input("Record Length (in seconds)", polar_json["record_len(in_second)"])
-    polar_data_storage_location = st.text_input("Data Storage Location", polar_json["Data storage location"])
-    polar_datatype = st.text_input("polar_Datatype", polar_json["polar_Datatype"])
+    st.markdown("**Polar Only can be set on one node page**")
+    # polar_json = json.loads(config.get("device_settings", "polar"))
+    # polar_record_len = st.text_input("Record Length (in seconds)", polar_json["record_len(in_second)"])
+    # polar_data_storage_location = st.text_input("Data Storage Location", polar_json["Data storage location"])
+    # polar_datatype = st.text_input("polar_Datatype", polar_json["polar_Datatype"])
     
     
-    polar_json["record_len(in_second)"] = polar_record_len
-    polar_json["Data storage location"] = polar_data_storage_location
-    polar_json["polar_Datatype"] = polar_datatype
+    # polar_json["record_len(in_second)"] = polar_record_len
+    # polar_json["Data storage location"] = polar_data_storage_location
+    # polar_json["polar_Datatype"] = polar_datatype
     
     
-    config.set("device_settings", "polar", json.dumps(polar_json))
+    # config.set("device_settings", "polar", json.dumps(polar_json))
 
 with col6:
     st.markdown("**Acoustic Recorder Settings**")
@@ -298,8 +305,8 @@ with col6:
     # set_save = st.checkbox("Set Save", value=config.getboolean("global_arg", "set_save"))
 
     # Device Arguments
-    input_device = st.selectbox("Input Device", options=["default"], index=0) # Modify as needed for actual device options
-    output_device = st.selectbox("Output Device", options=["default"], index=0) # Modify as needed for actual device options
+    input_device = st.selectbox("Input Device", options=["micArray RAW SPK"], index=0) # Modify as needed for actual device options
+    output_device = st.selectbox("Output Device", options=["micArray RAW SPK"], index=0) # Modify as needed for actual device options
 
     config.set("play_arg", "sampling_rate", str(sampling_rate))
     config.set("play_arg", "amplitude", str(amplitude))

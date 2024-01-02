@@ -37,5 +37,5 @@ def get_ntp_time(server="10.68.45.180", port=1230):
 
 if __name__ == "__main__":
     ntp_time = get_ntp_time()
-    print(f"Fake NTP time: {ntp_time}")
+    # print(f"Fake NTP time: {ntp_time}")
 

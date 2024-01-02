@@ -25,32 +25,38 @@ def save_timestamp_data_modified(temp_data, timestamp, f):
 #     existing_folders = glob.glob(os.path.join(output_directory, 'output_*'))
 #     indices = [int(os.path.basename(f).split('_')[1]) for f in existing_folders]
 #     return max(indices) + 1 if indices else 0
-
-def save_timestamp_data(temp_data, index, timestamp, output_directory):
-    data_folder = os.path.join(output_directory, "data")
+#Comment for uwb
+# def save_timestamp_data(temp_data, index, timestamp, output_directory):
+#     data_folder = os.path.join(output_directory, "data")
     
-    if not os.path.exists(data_folder):
-        os.makedirs(data_folder)
+#     if not os.path.exists(data_folder):
+#         os.makedirs(data_folder)
 
-    file_path = os.path.join(data_folder, f'output_{index}.pickle')
+#     file_path = os.path.join(data_folder, f'output_{index}.pickle')
     
-    # Load existing data if the file exists
-    if os.path.exists(file_path):
-        with open(file_path, 'rb') as f:
-            existing_data = pickle.load(f)
-    else:
-        existing_data = []
+#     # Load existing data if the file exists
+#     if os.path.exists(file_path):
+#         with open(file_path, 'rb') as f:
+#             existing_data = pickle.load(f)
+#     else:
+#         existing_data = []
 
-    data_dict = {"timestamp": timestamp, "data": temp_data}
-    existing_data.append(data_dict)
+#     data_dict = {"timestamp": timestamp, "data": temp_data}
+#     existing_data.append(data_dict)
     
-    with open(file_path, 'wb') as f:
-        pickle.dump(existing_data, f)
+#     with open(file_path, 'wb') as f:
+#         pickle.dump(existing_data, f)
 
 
 def get_next_index(output_directory):
     data_folder = os.path.join(output_directory, "data")
     existing_files = glob.glob(os.path.join(data_folder, 'output_*.pickle'))
+    indices = [int(os.path.splitext(os.path.basename(f))[0].split('_')[1]) for f in existing_files]
+    return max(indices) + 1 if indices else 0
+
+def get_next_index_seekthermal(output_directory):
+    data_folder = os.path.join(output_directory, "data")
+    existing_files = glob.glob(os.path.join(data_folder, 'thermal_*.mp4'))
     indices = [int(os.path.splitext(os.path.basename(f))[0].split('_')[1]) for f in existing_files]
     return max(indices) + 1 if indices else 0
 
@@ -66,7 +72,7 @@ def save_timestamp_data_polar(temp_data, index, timestamp, output_directory):
     if not os.path.exists(data_folder):
         os.makedirs(data_folder)
 
-    file_path = os.path.join(data_folder, f'output_{index}.pickle')
+    file_path = os.path.join(data_folder, 'output_{}.pickle'.format(index))
     
     # Load existing data if the file exists
     if os.path.exists(file_path):

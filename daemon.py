@@ -24,6 +24,7 @@ process_dict = {
     "Polar": {"pid": None},
     "Acoustic Recorder": {"pid": None},
     "Acoustic Player": {"pid": None},
+    "uwb":{"pid": None},
 }
 
 process_dict_file = "process_dict.json"
@@ -39,8 +40,10 @@ while True:
         if process_info["pid"] is not None:
             status = get_process_status(process_info["pid"])
             status_dict[process_name] = {"status": status, "sampling_rate": 0.0}
-
+    
+    ordered_keys = ["IRA", "Depth Camera", "MMWave", "SeekThermal", "Polar", "Acoustic Recorder", "Acoustic Player", "uwb"]
+    ordered_status_dict = {key: status_dict[key] for key in ordered_keys if key in status_dict}
     with open("status.json", "w") as f:
-        json.dump(status_dict, f)
+        json.dump(ordered_status_dict, f)
 
     time.sleep(3)

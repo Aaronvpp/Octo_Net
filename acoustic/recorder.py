@@ -10,6 +10,7 @@ def check_terminate_flag():
         return True
     return False
 
+
 logger.info("Delay {}s".format(global_arg.delay))
 sleep(global_arg.delay)
 recorder = AudioRecorder(play_arg, path=global_arg.data_path)
@@ -33,5 +34,6 @@ if recorder:
         print(f"Data shape: {data_record.shape}")
         if global_arg.set_save:
             recorder.save_record()
+        
         recorder.end()
         

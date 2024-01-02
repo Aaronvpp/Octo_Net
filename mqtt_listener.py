@@ -27,11 +27,14 @@ def on_message(client, userdata, msg):
 
         # Update the local config with the received data
         local_config = configparser.ConfigParser()
+        local_config.read('config.ini')  # Load existing config
         for section, values in config_data.items():
             if not local_config.has_section(section):
                 local_config.add_section(section)
             for key, value in values.items():
-                local_config.set(section, key, value)
+                if key != "polar":
+                    local_config.set(section, key, value)
+                    print("section:",section, "key:",key, "values:", values)
 
         # Save the updated config to the local config file
         with open("config.ini", "w") as config_file:

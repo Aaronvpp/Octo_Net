@@ -16,7 +16,7 @@ import paho.mqtt.client as mqtt
 import threading
 import asyncio
 
-
+PYTHON_EXE = "/home/aiot-mini/anaconda3/envs/octo/bin/python"
 print("Startover------------------------------------")
 if "start_flag" not in st.session_state:
     print(st.session_state,"st.session_state")
@@ -25,6 +25,9 @@ if "start_flag" not in st.session_state:
 if "terminate_flag" not in st.session_state:
     print(st.session_state,"st.session_state")
     st.session_state.terminate_flag = False
+
+if "polar_flag" not in st.session_state:
+    st.session_state.polar_flag = False
 print("finish Flag initialization------------------------------------")
 # def on_connect(client, userdata, flags, rc):
 #     print("Connected with result code " + str(rc))
@@ -56,6 +59,15 @@ print("finish Flag initialization------------------------------------")
 def wait_for_polar_ready():
     while not os.path.exists('polar_ready.txt'):
         time.sleep(0.5)
+    st.success("Polar device is now ready.")
+
+def check_polar_ready():
+    if os.path.exists("polar_ready.txt"):
+        st.session_state.polar_flag = True  
+        os.remove("polar_ready.txt")
+        st.rerun()
+        return True
+    return False
 
 def check_start_flag():
     if os.path.exists("start_flag_mqtt.txt"):
@@ -73,6 +85,8 @@ def check_terminate_flag():
         return True
     return False
 
+# if "processes" not in st.session_state:
+#     st.session_state.processes = []
 processes = []
  # Initialize the process_dict
 process_dict = {
@@ -83,7 +97,24 @@ process_dict = {
     "Polar": {"pid": None},
     "Acoustic Recorder": {"pid": None},
     "Acoustic Player": {"pid": None},
-}
+    "uwb":{"pid": None},
+    }
+if "process_polar" not in st.session_state:
+    st.session_state.process_polar = []
+if "process_dict_polar" not in st.session_state:
+    st.session_state.process_dict_polar = {
+    "Polar": {"pid": None},
+    }
+# process_dict = {
+#     "IRA": {"pid": None},
+#     "Depth Camera": {"pid": None},
+#     "MMWave": {"pid": None},
+#     "SeekThermal": {"pid": None},
+#     "Polar": {"pid": None},
+#     "Acoustic Recorder": {"pid": None},
+#     "Acoustic Player": {"pid": None},
+#     "uwb":{"pid": None},
+# }
 
 # def update_modality_status(status_placeholder):
 #     try:
@@ -121,6 +152,7 @@ def get_experiment_duration(log_file_path):
 
 
 def update_modality_status(status_placeholder):
+    ordered_process_names = ["IRA", "Depth Camera", "MMWave", "SeekThermal", "Polar", "Acoustic Recorder", "Acoustic Player", "uwb"]
     try:
         with open(os.path.abspath(os.path.join(os.path.dirname(__file__), "status.json")), "r") as f:
             status_dict = json.load(f)
@@ -128,13 +160,15 @@ def update_modality_status(status_placeholder):
         status_dict = {}  # Provide a default value or log an error message
 
     status_text = ""
-    for process_name, process_info in status_dict.items():
-        status = process_info["status"]
-        if status.lower() == 'running' or status.lower() == 'sleeping':
-            status_text += f'{process_name}: Actual Sampling rate : {process_info["sampling_rate"]} <span style="color:green">⬤</span> (Running)<br>'
-        else:
-            status_text += f'{process_name}: <span style="color:red">⬤</span> (Not Running)<br>'
-
+    for process_name in ordered_process_names:
+        if process_name in status_dict:
+            process_info = status_dict[process_name]
+            status = process_info["status"]
+            color = "green" if status.lower() in ['running', 'sleeping'] else "red"
+            status_indicator = f'<span style="color:{color};">⬤</span>'
+            sampling_rate_info = f'Actual Sampling rate: {round(process_info["sampling_rate"], 2)}' if "sampling_rate" in process_info else ""
+            status_text += f"{status_indicator} {process_name}: {sampling_rate_info} ({'Running' if color == 'green' else 'Not Running'})<br>"
+    
     status_placeholder.markdown(status_text, unsafe_allow_html=True)
 
 def find_latest_log_file(log_dir):
@@ -241,7 +275,7 @@ config.set("label_info", "activity", activity_label)
 st.subheader("Device Settings")
 
 # Create columns for each device
-col1, col2, col3, col4, col5, col6 = st.columns(6)
+col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
 
 # IRA device settings
 with col1:
@@ -284,7 +318,8 @@ with col2:
     depth_cam_data_storage_location = st.text_input("Data Storage Location", depth_cam_json["Data storage location"])
     depth_cam_depth_datatype = st.text_input("Depth_Datatype", depth_cam_json["Depth_Datatype"])
     depth_cam_rgb_datatype = st.text_input("RGB_Datatype", depth_cam_json["RGB_Datatype"])
-
+    depth_cam_min_depth = st.text_input("Minimum Depth Distance (meters)", depth_cam_json.get("min_depth_distance", "0"))
+    depth_cam_max_depth = st.text_input("Maximum Depth Distance (meters)", depth_cam_json.get("max_depth_distance", "5"))
 
     
     depth_cam_json["resolution"] = depth_cam_resolution
@@ -295,6 +330,8 @@ with col2:
     depth_cam_json["Data storage location"] = depth_cam_data_storage_location
     depth_cam_json["Depth_Datatype"] = depth_cam_depth_datatype
     depth_cam_json["RGB_Datatype"] = depth_cam_rgb_datatype
+    depth_cam_json["min_depth_distance"] = depth_cam_min_depth
+    depth_cam_json["max_depth_distance"] = depth_cam_max_depth
     config.set("device_settings", "depth_cam", json.dumps(depth_cam_json))
 
     # if st.button("Start depthcamera"):
@@ -324,6 +361,8 @@ with col3:
     seekthermal_temperature_unit = st.text_input("Temperature Unit", seekthermal_json["temperature_unit"])
     seekthermal_data_storage_location = st.text_input("Data Storage Location", seekthermal_json["Data storage location"])
     seekthermal_datatype = st.text_input("seekthermal_Datatype", seekthermal_json["seekthermal_Datatype"])
+    seekthermal_min_temp = st.text_input("min_temp", seekthermal_json["min_temp"])
+    seekthermal_max_temp= st.text_input("max_temp", seekthermal_json["max_temp"])
 
     seekthermal_json["port"] = seekthermal_port
     seekthermal_json["frame_rate"] = seekthermal_frame_rate
@@ -333,6 +372,8 @@ with col3:
     seekthermal_json["temperature_unit"] = seekthermal_temperature_unit
     seekthermal_json["Data storage location"] = seekthermal_data_storage_location
     seekthermal_json["seekthermal_Datatype"] = seekthermal_datatype
+    seekthermal_json["min_temp"] = seekthermal_min_temp
+    seekthermal_json["max_temp"] = seekthermal_max_temp
     config.set("device_settings", "seekthermal", json.dumps(seekthermal_json))
 
     # if st.button("Start SeekThermal Camera"):
@@ -353,13 +394,13 @@ with col3:
 with col4:
     st.markdown("**MMWave**")
     mmwave_json = json.loads(config.get("device_settings", "mmwave"))
-    mmwave_setting1 = st.text_input("Setting 1", mmwave_json["setting1"])
-    mmwave_setting2 = st.text_input("Setting 2", mmwave_json["setting2"])
+    # mmwave_setting1 = st.text_input("Setting 1", mmwave_json["setting1"])
+    # mmwave_setting2 = st.text_input("Setting 2", mmwave_json["setting2"])
     mmwave_data_storage_location = st.text_input("Data Storage Location", mmwave_json["Data storage location"])
     mmwave_datatype = st.text_input("mmwave_Datatype", mmwave_json["mmwave_Datatype"])
 
-    mmwave_json["setting1"] = mmwave_setting1
-    mmwave_json["setting2"] = mmwave_setting2
+    # mmwave_json["setting1"] = mmwave_setting1
+    # mmwave_json["setting2"] = mmwave_setting2
     mmwave_json["Data storage location"] = mmwave_data_storage_location
     mmwave_json["mmwave_Datatype"] = mmwave_datatype
     
@@ -432,8 +473,8 @@ with col6:
     # set_save = st.checkbox("Set Save", value=config.getboolean("global_arg", "set_save"))
 
     # Device Arguments
-    input_device = st.selectbox("Input Device", options=["default"], index=0) # Modify as needed for actual device options
-    output_device = st.selectbox("Output Device", options=["default"], index=0) # Modify as needed for actual device options
+    input_device = st.selectbox("Input Device", options=["micArray RAW SPK"], index=0) # Modify as needed for actual device options
+    output_device = st.selectbox("Output Device", options=["micArray RAW SPK"], index=0) # Modify as needed for actual device options
 
     config.set("play_arg", "sampling_rate", str(sampling_rate))
     config.set("play_arg", "amplitude", str(amplitude))
@@ -495,20 +536,52 @@ start_ira = st.checkbox("Start IRA")
 start_depth_camera = st.checkbox("Start Depth Camera")
 start_mmwave = st.checkbox("Start MMWave")
 start_seekthermal = st.checkbox("Start Seek Thermal")
-start_polar = st.checkbox("Start Polar")
 start_acoustic_recorder = st.checkbox("Start Acoustic Recorder")
 start_acoustic_player = st.checkbox("Start Acoustic Player")
-
+start_uwb = st.checkbox("Start UWB")
+# start_polar = st.checkbox("Start Polar")
 st.write("Reminder: As a Node, the configs above maybe overwritten by the Center Server. Please refresh this page if you want to edit the configs of this node.")
 # print("st.session_state.start_flag222", st.session_state.start_flag)
+if st.button("Connect to Polar H10"):
+    st.write("Connecting...")
+    # Save the global config and log
+    save_config(config, ini_file_path)
+    config = configparser.ConfigParser()
+    config.read(os.path.abspath(os.path.join(os.path.dirname(__file__), 'config.ini')))
+    output_directory = os.path.dirname(os.path.abspath(__file__))
+    current_index = get_next_index_global_log(output_directory)
+    # logger = setup_logger_global(output_directory, current_index)
+    config_data = {}
+    for section in config.sections():
+        config_data[section] = dict(config.items(section))
+    # logger.info(f"Loaded Global Configuration: {config_data}")
+    process = subprocess.Popen([PYTHON_EXE, "polar/H10/connect_H10.py"], cwd="/home/aiot-mini/code/")
+    # wait_for_polar_ready()
+    st.session_state.process_dict_polar["Polar"]["pid"] = process.pid
+    st.session_state.process_polar.append(process)
+
+    # process_dict["Polar"]["pid"] = process.pid
+    # # logger.info(f"Polar starts connecting blue tooth")
+    # processes.append(process)
+    # print(processes,"processes")
+    # print(process_dict,"process_dict")
+    # with open("process_dict.json", "w") as f:
+    #     json.dump(st.session_state.process_dict, f)
+
+if st.session_state.polar_flag == True:
+    print("Polar is ready")
+    st.success("Polar is ready")
+    time.sleep(3)  
+    st.session_state.polar_flag = False
+    
 
 # Save the modified .ini file when the "Save and run" button is clicked
 if st.button("Save and Run") or st.session_state.start_flag == True:
     save_config(config, ini_file_path)
     st.success("Config file saved.")
-    if start_polar:
-        st.write("Waiting for polar's bluetooth connection......")
-        
+    # if start_polar:
+    #     st.write("Waiting for polar's bluetooth connection......")
+    # print(processes,"processes")
     # Start recording data
     # st.write("Running and recording data...")
     
@@ -528,32 +601,32 @@ if st.button("Save and Run") or st.session_state.start_flag == True:
     if os.path.exists('polar_ready.txt'):
         os.remove('polar_ready.txt')
 
-    if start_polar:
-        process = subprocess.Popen(["python", "polar/H10/connect_H10.py"], cwd="/home/aiot-mini/code/")
-        process_dict["Polar"]["pid"] = process.pid
-        logger.info(f"Polar starts recording")
-        processes.append(process)
+    # if start_polar:
+    #     process = subprocess.Popen(["python", "polar/H10/connect_H10.py"], cwd="/home/aiot-mini/code/")
+    #     process_dict["Polar"]["pid"] = process.pid
+    #     logger.info(f"Polar starts recording")
+    #     processes.append(process)
     # when starting the IRA process:
     if start_ira:
-        if start_polar:
-            wait_for_polar_ready()
-        process = subprocess.Popen(["python", "IRA/IRA.py"], cwd="/home/aiot-mini/code/")
+        # if start_polar:
+        #     wait_for_polar_ready()
+        process = subprocess.Popen([PYTHON_EXE, "IRA/IRA.py"], cwd="/home/aiot-mini/code/")
         process_dict["IRA"]["pid"] = process.pid
         logger.info(f"IRA starts recording")
         processes.append(process)
 
     if start_depth_camera:
-        if start_polar:
-            wait_for_polar_ready()
-        process = subprocess.Popen(["python", "DeptCam/deptcam.py"], cwd="/home/aiot-mini/code/")
+        # if start_polar:
+        #     wait_for_polar_ready()
+        process = subprocess.Popen([PYTHON_EXE, "DeptCam/deptcam.py"], cwd="/home/aiot-mini/code/")
         process_dict["Depth Camera"]["pid"] = process.pid
         logger.info(f"Depth and RGB start recording")
         processes.append(process)
 
     if start_mmwave:
-        if start_polar:
-            wait_for_polar_ready()
-        process = subprocess.Popen(["python", "AWR1843-Read-Data-Python-MMWAVE-SDK-3--master/readData_AWR1843.py"], cwd="/home/aiot-mini/code/")
+        # if start_polar:
+        #     wait_for_polar_ready()
+        process = subprocess.Popen([PYTHON_EXE, "AWR1843-Read-Data-Python-MMWAVE-SDK-3--master/readData_AWR1843.py"], cwd="/home/aiot-mini/code/")
         process_dict["MMWave"]["pid"] = process.pid
         logger.info(f"MMWave starts recording")
         processes.append(process)
@@ -563,31 +636,53 @@ if st.button("Save and Run") or st.session_state.start_flag == True:
     # processes.append(process)
 
     if start_seekthermal:
-        if start_polar:
-            wait_for_polar_ready()
-        process = subprocess.Popen(["python", "seekcamera-python/runseek/seekcamera-opencv.py"], cwd="/home/aiot-mini/code/")
+        # if start_polar:
+        #     wait_for_polar_ready()
+        process = subprocess.Popen([PYTHON_EXE, "seekcamera-python/runseek/seekcamera-opencv.py"], cwd="/home/aiot-mini/code/")
         process_dict["SeekThermal"]["pid"] = process.pid
         logger.info(f"Seekthermal starts recording")
         processes.append(process)
 
     if start_acoustic_recorder:
-        if start_polar:  
-            wait_for_polar_ready()
-        process = subprocess.Popen(["python", "acoustic/recorder.py", "json", "./acoustic/config_file/config_Kasami.json"], cwd="/home/aiot-mini/code/")
+        # if start_polar:  
+        #     wait_for_polar_ready()
+        process = subprocess.Popen([PYTHON_EXE, "acoustic/recorder.py", "json", "./acoustic/config_file/config_Kasami.json"], cwd="/home/aiot-mini/code/")
         process_dict["Acoustic Recorder"]["pid"] = process.pid
         logger.info("Acoustic Recorder starts recording")
         processes.append(process)
 
     if start_acoustic_player:
-        if start_polar:  
-            wait_for_polar_ready()
-        process = subprocess.Popen(["python", "acoustic/player.py", "json", "./acoustic/config_file/config_Kasami.json"], cwd="/home/aiot-mini/code/")
+        # if start_polar:  
+        #     wait_for_polar_ready()
+        process = subprocess.Popen([PYTHON_EXE, "acoustic/player.py", "json", "./acoustic/config_file/config_Kasami.json"], cwd="/home/aiot-mini/code/")
         process_dict["Acoustic Player"]["pid"] = process.pid
         logger.info("Acoustic Player starts playing")
         processes.append(process)
 
+    if start_uwb:
+        # if start_polar:
+        #         wait_for_polar_ready()
+        # time.sleep(0.01) 
+        python35_path = '/home/aiot-mini/anaconda3/envs/py35/bin/python3.5'  # Path to Python 3.5 interpreter
+        script_path = '/home/aiot-mini/code/uwb/Legacy-SW/ModuleConnector/ModuleConnector-unix-1/python35-x86_64-linux-gnu/pymoduleconnector/examples/XEP_X4M200_X4M300_plot_record_playback_radar_raw_data.py'  # Path to your Python 3.5 script
+        script_args = ['-d', '/dev/ttyACM2']  # Arguments for the script
+
+        # Combine the Python interpreter path, script path, and script arguments
+        full_command = ["sudo", python35_path, script_path] + script_args
+        print(full_command)
+        # Call the Python script with arguments
+        process_uwb = subprocess.Popen(full_command)
+        process_dict["uwb"]["pid"] = process_uwb.pid
+        logger.info(f"UWB starts recording")
+        processes.append(process_uwb)
+
+    process_dict["Polar"]["pid"] = st.session_state.process_dict_polar["Polar"]["pid"]
+    processes.append(st.session_state.process_polar)
+    
+
     with open("process_dict.json", "w") as f:
         json.dump(process_dict, f)
+
     st.session_state.start_flag = False # Reset the flag after executing the block
      
     # process_dict = {
@@ -660,7 +755,7 @@ if st.button("Terminate All") or st.session_state.terminate_flag == True:
         st.write("All processes are terminated.")
 
     # Metric
-    col1, col2, col3, col4, col5, col6 = st.columns(6)
+    col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
  
     # Reporting where the data and log is stored.
     ira_status_path = os.path.join("IRA", "ira_data_saved_status.txt")
@@ -673,6 +768,7 @@ if st.button("Terminate All") or st.session_state.terminate_flag == True:
             current_index = int(current_index_match.group(1))
             current_index += 1  # Add one to the current_index
         st.success(ira_data_saved_status)
+        logger.info(f'{ira_data_saved_status}')
         col1.metric("IRA data", f"{current_index}", "1 pickle file saved")
         os.remove(ira_status_path)
 
@@ -681,12 +777,13 @@ if st.button("Terminate All") or st.session_state.terminate_flag == True:
         with open(seekthermal_status_path, "r") as f:
             seekthermal_data_saved_status = f.read()
             # Extract current_index using regex
-        current_index_match = re.search(r"output_(\d+).pickle", seekthermal_data_saved_status)
+        current_index_match = re.search(r"thermal_(\d+).mp4", seekthermal_data_saved_status)
         if current_index_match:
             current_index = int(current_index_match.group(1))
             current_index += 1  # Add one to the current_index
-        col2.metric("SeekThermal data", f"{current_index}", "1 pickle file saved")
+        col2.metric("SeekThermal data", f"{current_index}", "1 mp4 file saved")
         st.success(seekthermal_data_saved_status)
+        logger.info(f'{seekthermal_data_saved_status}')
         os.remove(seekthermal_status_path)
 
     deptcam_status_path = os.path.join("DeptCam", "deptcam_data_saved_status.txt")
@@ -694,12 +791,13 @@ if st.button("Terminate All") or st.session_state.terminate_flag == True:
         with open(deptcam_status_path, "r") as f:
             deptcam_data_saved_status = f.read()
             # Extract current_index using regex
-        current_index_match = re.search(r"output_(\d+).pickle", deptcam_data_saved_status)
+        current_index_match = re.search(r"output_(\d+)", deptcam_data_saved_status)
         if current_index_match:
             current_index = int(current_index_match.group(1))
             current_index += 1  # Add one to the current_index
-        col3.metric("Dept and RGB data", f"{current_index}", "1 pickle and 1 mp4 file saved")
+        col3.metric("Dept and RGB data", f"{current_index}", "1 RGB mp4 and 1 depth mp4 file saved")
         st.success(deptcam_data_saved_status)
+        logger.info(f'{deptcam_data_saved_status}')
         os.remove(deptcam_status_path)
 
     mmwave_status_path = os.path.join("AWR1843-Read-Data-Python-MMWAVE-SDK-3--master", "mmwave_data_saved_status.txt")
@@ -713,6 +811,7 @@ if st.button("Terminate All") or st.session_state.terminate_flag == True:
             current_index += 1  # Add one to the current_index
         col4.metric("MMwave data", f"{current_index}", "1 pickle file saved")
         st.success(mmwave_data_saved_status)
+        logger.info(f'{mmwave_data_saved_status}')
         os.remove(mmwave_status_path)
 
     # Reporting where the data and log is stored.
@@ -726,8 +825,50 @@ if st.button("Terminate All") or st.session_state.terminate_flag == True:
             current_index = int(current_index_match.group(1))
             current_index += 1  # Add one to the current_index
         st.success(polar_data_saved_status)
+        logger.info(f'{polar_data_saved_status}')
         col5.metric("Polar data", f"{current_index}", "1 pickle file saved")
         os.remove(polar_status_path)
+
+    acoustic_status_path = os.path.join("acoustic", "audio", "acoustic_data_saved_status.txt")
+    if os.path.exists(acoustic_status_path):
+        with open(acoustic_status_path, "r") as f:
+            acoustic_data_saved_status = f.read()
+            # Extract current_index using regex
+        current_index_match = re.search(r"_([0-9]+)\.wav", acoustic_data_saved_status)
+        if current_index_match:
+            current_index = int(current_index_match.group(1))
+            current_index += 1  # Add one to the current_index
+        col6.metric("Acoustic data", f"{current_index}", "1 .wav saved")
+        st.success(acoustic_data_saved_status)
+        logger.info(f'{acoustic_data_saved_status}')
+        os.remove(acoustic_status_path)
+
+    # acoustic_status_path = os.path.join("acoustic", "audio", "acoustic_data_saved_status.txt")
+    # if os.path.exists(acoustic_status_path):
+    #     with open(acoustic_status_path, "r") as f:
+    #         acoustic_data_saved_status = f.read()
+    #         # Extract current_index using regex
+    #     current_index_match = re.search(r"_([0-9]+)\.wav", acoustic_data_saved_status)
+    #     if current_index_match:
+    #         current_index = int(current_index_match.group(1))
+    #         current_index += 1  # Add one to the current_index
+    #     col6.metric("Acoustic data", f"{current_index}", "1 .wav saved")
+    #     st.success(acoustic_data_saved_status)
+    #     os.remove(acoustic_status_path)
+
+    uwb_status_path = os.path.join("uwb","Legacy-SW","ModuleConnector","ModuleConnector-unix-1","python35-x86_64-linux-gnu","pymoduleconnector","examples","uwb_data_saved_status.txt")
+    if os.path.exists(uwb_status_path):
+        with open(uwb_status_path, "r") as f:
+            uwb_data_saved_status = f.read()
+            # Extract current_index using regex
+        current_index_match = re.search(r"_([0-9]+)\.pickle", uwb_data_saved_status)
+        if current_index_match:
+            current_index = int(current_index_match.group(1))
+            current_index += 1  # Add one to the current_index
+        col7.metric("UWB data", f"{current_index}", "1 .pickle saved")
+        st.success(uwb_data_saved_status)
+        logger.info(f'{uwb_data_saved_status}')
+        os.remove(uwb_status_path)
 
     # # Acoustic modality status
     # acoustic_status_path = os.path.join("acoustic", "acoustic_data_saved_status.txt")
@@ -751,5 +892,6 @@ status_placeholder = st.empty()
 while True:
     check_start_flag()
     check_terminate_flag()
+    check_polar_ready()
     update_modality_status(status_placeholder)
-    time.sleep(4)
+    time.sleep(1)

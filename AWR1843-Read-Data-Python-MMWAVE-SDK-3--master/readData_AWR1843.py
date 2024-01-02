@@ -19,6 +19,17 @@ import json
 import pickle
 import math
 
+
+def close(self):
+    """End connection between radar and machine
+
+    Returns:
+        None
+
+    """
+    self.cli_port.write('sensorStop\n'.encode())
+    self.cli_port.close()
+    self.data_port.close()
 # To see the size of the saved pickle
 def convert_size(size_bytes):
     if size_bytes == 0:
@@ -128,6 +139,7 @@ def parseConfigFile(configFileName):
         
         # Get the information about the profile configuration
         if "profileCfg" in splitWords[0]:
+            print(splitWords[0],"splitWords[0]")
             startFreq = int(float(splitWords[2]))
             idleTime = int(splitWords[3])
             rampEndTime = float(splitWords[5])
@@ -450,6 +462,9 @@ with open(file_path, 'ab') as f:
             
             time.sleep(0.001) # Sampling frequency of 30 Hz
             if check_terminate_flag():
+                CLIport.write(('sensorStop\n').encode())
+                CLIport.close()
+                Dataport.close()
                 logger.info("End recording by a terminate action.")
                 pickle_size = os.path.getsize(file_path)
                 human_readable_size = convert_size(pickle_size)
@@ -459,6 +474,7 @@ with open(file_path, 'ab') as f:
                         f.write(f"Total frames processed: {frame_counter},\n")
                         f.write(f"Pickle file size: {human_readable_size}\n")
                 break
+                
             
         # Stop the program and close everything if Ctrl + c is pressed
         except KeyboardInterrupt:
