@@ -127,6 +127,8 @@ def on_click(event, x, y, p1, temp_params):
         # cv2.imshow("Seek Thermal - Python OpenCV Sample", img)
 
 def main():   
+    # Create lists to store timestamps
+    seekthermal_video_timestamps = []
     #for testing the MSE
     # Initialize a list to store the frames
     all_depth_frames = []
@@ -201,6 +203,7 @@ def main():
                     # Inside the while True loop, after processing the temperature data
                     color_mapped_temp = cv2.applyColorMap(temp_normalized, cv2.COLORMAP_JET)
                     thermal_video_writer.write(color_mapped_temp)
+                    
                     # Get the current local time
                     # timestamp = get_local_time()
                     # # Get the current NTP time
@@ -219,6 +222,8 @@ def main():
                     
                     # Save frame data and timestamp
                     print("fake_ntp_timestamp", fake_ntp_timestamp)
+                    # Append the timestamp to the list
+                    seekthermal_video_timestamps.append(fake_ntp_timestamp)
                     # Save the temperature data and timestamp
                     #save_timestamp_data_modified(temp, fake_ntp_timestamp, f)
                     # pickle_idx = pickle_idx + 1
@@ -239,6 +244,9 @@ def main():
                 mp4_size = os.path.getsize(thermal_video_filename)
                 human_readable_mp4_size = convert_size(mp4_size)
                 logger.info("End recording by a terminate action.")
+                with open(os.path.join(data_folder, f'timestamps_{experiment_idx}.txt'), 'w') as f:
+                    for timestamp in seekthermal_video_timestamps:
+                        f.write(f"{timestamp}\n")
                 #pickle_size = os.path.getsize(file_path)
                 #human_readable_size = convert_size(pickle_size)
                 with open(os.path.join(os.path.dirname(__file__), "seekthermal_data_saved_status.txt"), "w") as f:
