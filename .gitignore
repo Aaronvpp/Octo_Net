@@ -2,9 +2,8 @@ __MACOSX/
 __pycache__
 .git-bk
 .vscode
-uwb/*
-!uwb/Legacy-SW/ModuleConnector/ModuleConnector-unix-1/python35-x86_64-linux-gnu/pymoduleconnector/examples/XEP_X4M200_X4M300_plot_record_playback_radar_raw_data.py
-
+uwb/Legacy-SW/ModuleConnector/ModuleConnector-unix-1/python35-x86_64-linux-gnu/pymoduleconnector/examples/data
+uwb/Legacy-SW/ModuleConnector/ModuleConnector-unix-1/python35-x86_64-linux-gnu/pymoduleconnector/examples/logs
 Audio_Collector
 IRA/data
 IRA/logs
