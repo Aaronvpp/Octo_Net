@@ -22,7 +22,7 @@ def on_connect(client, userdata, flags, rc):
 # Initialize the MQTT client 
 client = mqtt.Client() 
 client.on_connect = on_connect 
-client.connect("10.68.45.180", 1883, 120) 
+client.connect("10.68.6.46", 1883, 120) 
 # Streamlit HTML content 
 highlighted_text = ''' 
 <div style="background-color: #f0e68c; padding: 10px; border-radius: 5px;"> 
@@ -33,7 +33,7 @@ highlighted_text = '''
 st.markdown(highlighted_text, unsafe_allow_html=True) 
  
 # Defining the clickable link in HTML format 
-link_html = '<a href="http://10.68.45.180:8502">Enter the Node 1</a>' 
+link_html = '<a href="http://10.68.6.46:8502">Enter the Node 1</a>' 
  
 # Embedding the clickable link inside the highlighted_server HTML content 
 highlighted_server = f''' 

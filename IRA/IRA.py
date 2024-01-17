@@ -392,6 +392,8 @@ def main():
                     Onboard_timestamp = int(dict_data["loc_ts"])
                     Ambient_temperature = float(dict_data["AT"])
                     Detected_temperature = np.array(dict_data["data"]).reshape((24,32))
+                    # Horizontal flip (left to right and right to left)
+                    Detected_temperature = np.flip(Detected_temperature, axis=1)
                     
                     # new_time = Onboard_timestamp
                     # diff_time = new_time - old_time

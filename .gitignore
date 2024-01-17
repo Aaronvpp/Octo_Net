@@ -28,3 +28,11 @@ status.json
 acoustic/data/
 data/
 uwb/Legacy-SW/XEP
+acoustic/check_device.ipynb
+DeptCam/.ipynb_checkpoints/convert_back_to_depth-checkpoint.py
+DeptCam/convert_back_to_depth.py
+seekcamera-python/runseek/convert_back_to_thermal.py
+config.ini
+Global_Server_config.ini
+
+polar.py

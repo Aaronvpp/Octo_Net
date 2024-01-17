@@ -20,8 +20,8 @@ def set_and_check_device(play_arg, device_arg):
     sd.default.samplerate = play_arg.sampling_rate
     sd.default.channels = device_arg.input_channels, device_arg.output_channels
     print(sd.default)
-    # assert (sd.check_input_settings() == None)
-    # assert (sd.check_output_settings() == None)
+    assert (sd.check_input_settings() == None)
+    assert (sd.check_output_settings() == None)
 
 
 def check_record_and_save(global_arg):
