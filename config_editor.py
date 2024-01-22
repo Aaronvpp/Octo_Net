@@ -574,7 +574,7 @@ if st.button("Connect to Polar H10"):
 
 if st.session_state.polar_flag == True:
     print("Polar is ready")
-    st.success("Polar is ready")
+    st.success("Polar is ready! You must use server's Start (Not the 'Save and Run' below)")
     time.sleep(3)  
     st.session_state.polar_flag = False
     st.session_state.polar_ready = True
@@ -609,7 +609,7 @@ if st.button("Save and Run") or st.session_state.start_flag == True:
     if st.session_state.polar_ready == True:
         logger.info(f"Polar starts recording")
         st.session_state.polar_ready = False
-        
+
     if start_ira:
         # if start_polar:
         #     wait_for_polar_ready()
