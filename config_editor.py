@@ -26,6 +26,10 @@ if "terminate_flag" not in st.session_state:
     print(st.session_state,"st.session_state")
     st.session_state.terminate_flag = False
 
+
+if "polar_ready" not in st.session_state:
+    st.session_state.polar_ready = False
+
 if "polar_flag" not in st.session_state:
     st.session_state.polar_flag = False
 print("finish Flag initialization------------------------------------")
@@ -573,6 +577,7 @@ if st.session_state.polar_flag == True:
     st.success("Polar is ready")
     time.sleep(3)  
     st.session_state.polar_flag = False
+    st.session_state.polar_ready = True
     
 
 # Save the modified .ini file when the "Save and run" button is clicked
@@ -601,12 +606,10 @@ if st.button("Save and Run") or st.session_state.start_flag == True:
     if os.path.exists('polar_ready.txt'):
         os.remove('polar_ready.txt')
 
-    # if start_polar:
-    #     process = subprocess.Popen(["python", "polar/H10/connect_H10.py"], cwd="/home/aiot-mini/code/")
-    #     process_dict["Polar"]["pid"] = process.pid
-    #     logger.info(f"Polar starts recording")
-    #     processes.append(process)
-    # when starting the IRA process:
+    if st.session_state.polar_ready == True:
+        logger.info(f"Polar starts recording")
+        st.session_state.polar_ready = False
+        
     if start_ira:
         # if start_polar:
         #     wait_for_polar_ready()
