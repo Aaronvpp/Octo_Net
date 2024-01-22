@@ -451,8 +451,8 @@ def simple_xep_plot(device_name, record=False, baseband=False):
                 pickle_size = os.path.getsize(file_path)
                 human_readable_size = convert_size(pickle_size)
                 with open(os.path.join(os.path.dirname(__file__), "uwb_data_saved_status.txt"), "w") as h:
-                    h.write("uwb Data saved data/output_{}.pickle,\n".format(experiment_idx))
-                    h.write("uwb Log saved logs/config_{}.log\n".format(experiment_idx))
+                    h.write("uwb Data saved /uwb/data/output_{}.pickle,\n".format(experiment_idx))
+                    h.write("uwb Log saved /uwb/logs/config_{}.log\n".format(experiment_idx))
                     h.write("Total frames processed: {},\n".format(frame_counter_uwb))
                     h.write("Pickle file size: {}\n".format(human_readable_size))
                 return

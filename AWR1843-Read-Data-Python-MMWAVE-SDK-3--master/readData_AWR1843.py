@@ -469,8 +469,8 @@ with open(file_path, 'ab') as f:
                 pickle_size = os.path.getsize(file_path)
                 human_readable_size = convert_size(pickle_size)
                 with open(os.path.join(os.path.dirname(__file__), "mmwave_data_saved_status.txt"), "w") as f:
-                        f.write(f"mmwave Data saved /AWR1843-Read-Data-Python-MMWAVE-SDK-3--master/data/output_{current_index}.pickle,\n")
-                        f.write(f"mmwave Log saved /AWR1843-Read-Data-Python-MMWAVE-SDK-3--master/logs/config_{current_index}.log\n")
+                        f.write(f"mmwave Data saved /mmWave/data/output_{current_index}.pickle,\n")
+                        f.write(f"mmwave Log saved /mmWave/logs/config_{current_index}.log\n")
                         f.write(f"Total frames processed: {frame_counter},\n")
                         f.write(f"Pickle file size: {human_readable_size}\n")
                 break

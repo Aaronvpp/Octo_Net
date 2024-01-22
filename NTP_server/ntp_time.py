@@ -3,7 +3,7 @@ from datetime import datetime
 import pytz
 def get_ntp_time():
     utc_time = datetime.now(pytz.utc)
-    japan_timezone = pytz.timezone('Asia/Tokyo')
+    japan_timezone = pytz.timezone('Asia/Hong_Kong')
     ntp_time = utc_time.astimezone(japan_timezone)
     return ntp_time
 
@@ -24,6 +24,6 @@ def start_ntp_time_server(host, port):
         client_socket.close()
 
 if __name__ == "__main__":
-    host = "10.68.6.46" #modify this and time_utils.py and mqtt_listener.py and mqtt.py when you change the network
+    host = "10.68.45.180" #modify this and time_utils.py and mqtt_listener.py and mqtt.py when you change the network
     port = 1230
     start_ntp_time_server(host, port)

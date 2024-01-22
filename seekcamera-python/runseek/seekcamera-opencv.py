@@ -251,8 +251,8 @@ def main():
                 #human_readable_size = convert_size(pickle_size)
                 with open(os.path.join(os.path.dirname(__file__), "seekthermal_data_saved_status.txt"), "w") as f:
                     #f.write(f"seekthermal Data saved seekcamera-python/runseek/data/output_{experiment_idx}.pickle,\n")
-                    f.write(f"seekthermal Log saved seekcamera-python/runseek/data/thermal_{experiment_idx}.mp4\n")
-                    f.write(f"seekthermal Log saved seekcamera-python/runseek/logs/config_{experiment_idx}.log\n")
+                    f.write(f"seekthermal Data saved /seekThermal/data/thermal_{experiment_idx}.mp4\n")
+                    f.write(f"seekthermal Log saved /seekThermal/logs/config_{experiment_idx}.log\n")
                     f.write(f"Total frames processed: {frame_counter},\n")
                     f.write(f"Thermal video file size: {human_readable_mp4_size}\n")
                     #f.write(f"Pickle file size: {human_readable_size}\n")

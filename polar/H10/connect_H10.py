@@ -336,8 +336,8 @@ async def main():
                             pickle_size = os.path.getsize(file_path)
                             human_readable_size = convert_size(pickle_size)
                             with open(os.path.join(os.path.dirname(__file__), "polar_data_saved_status.txt"), "w") as f:
-                                f.write(f"Polar Data saved /polar/H10/data/output_{current_index}.pickle,\n")
-                                f.write(f"Polar Log saved /polar/H10/logs/config_{current_index}.log\n")
+                                f.write(f"Polar Data saved /polar/data/output_{current_index}.pickle,\n")
+                                f.write(f"Polar Log saved /polar/logs/config_{current_index}.log\n")
                                 f.write(f"Total frames processed: {frame_counter},\n")
                                 f.write(f"Pickle file size: {human_readable_size}\n")
                             if os.path.exists('polar_ready.txt'):

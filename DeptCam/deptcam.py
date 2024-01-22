@@ -235,9 +235,10 @@ try:
             #pickle_size = os.path.getsize(file_path)
             #human_readable_size = convert_size(pickle_size)
             with open(os.path.join(os.path.dirname(__file__), "deptcam_data_saved_status.txt"), "w") as f:
-                    #f.write(f"Deptcam Data saved /DeptCam/output_{index}/depth_image_output_{index}.pickle,\n")
-                    f.write(f"RBG video saved /DeptCam/output_{index}/rgb_video_output_{index}/rgb_video.mp4,\n")
-                    f.write(f"Depthcam Log saved /DeptCam/logs/config_{index}.log\n")
+                    f.write(f"Deptcam Data saved /depthCamera/output_{index}/depth_image_output_{index}/depth_video.mp4,\n")
+                    f.write(f"RBG video saved /depthCamera/output_{index}/rgb_video_output_{index}/rgb_video.mp4,\n")
+                    f.write(f"Depthcam Log saved /depthCamera/logs/config_{index}.log\n")
+                    f.write(f"RGB Log saved /depthCamera/logs/config_{index}.log\n")
                     f.write(f"Total frames processed: {frame_counter},\n")
                     #f.write(f"DepthCam Pickle file size: {human_readable_size},\n")
                     f.write(f"DepthCam video file size: {human_readable_mp4_depth_size},\n")
