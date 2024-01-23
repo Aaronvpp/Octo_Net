@@ -552,12 +552,12 @@ if st.button("Connect to Polar H10"):
     save_config(config, ini_file_path)
     config = configparser.ConfigParser()
     config.read(os.path.abspath(os.path.join(os.path.dirname(__file__), 'config.ini')))
-    output_directory = os.path.dirname(os.path.abspath(__file__))
-    current_index = get_next_index_global_log(output_directory)
+    # output_directory = os.path.dirname(os.path.abspath(__file__))
+    # current_index = get_next_index_global_log(output_directory)
     # logger = setup_logger_global(output_directory, current_index)
-    config_data = {}
-    for section in config.sections():
-        config_data[section] = dict(config.items(section))
+    # config_data = {}
+    # for section in config.sections():
+    #     config_data[section] = dict(config.items(section))
     # logger.info(f"Loaded Global Configuration: {config_data}")
     process = subprocess.Popen([PYTHON_EXE, "polar/H10/connect_H10.py"], cwd="/home/aiot-mini/code/")
     # wait_for_polar_ready()
@@ -596,6 +596,8 @@ if st.button("Save and Run") or st.session_state.start_flag == True:
     config.read(os.path.abspath(os.path.join(os.path.dirname(__file__), 'config.ini')))
     output_directory = os.path.dirname(os.path.abspath(__file__))
     current_index = get_next_index_global_log(output_directory)
+    print(current_index, "currentindex")
+    
     logger = setup_logger_global(output_directory, current_index)
     config_data = {}
     for section in config.sections():
@@ -739,17 +741,18 @@ if st.button("Terminate All") or st.session_state.terminate_flag == True:
     output_directory = os.path.dirname(os.path.abspath(__file__))
     current_index = get_next_index_global_log(output_directory)
     log_index = int(current_index) - 1 
-    logger = setup_logger_global(output_directory, log_index)
-    logger.info("Termination flag set")
+    logger_terminate = setup_logger_global_terminate(output_directory, log_index)
+    logger_terminate.debug("Logger initialized in Save and Run block")
+    logger_terminate.info("Termination flag set")
     if global_log_file_path:
         experiment_duration = get_experiment_duration(global_log_file_path)
         if experiment_duration:
             st.write(f"Experiment duration: {experiment_duration}")
-            logger.info(f"Experiment duration: {experiment_duration}")
+            logger_terminate.info(f"Experiment duration: {experiment_duration}")
         else:
             st.write("Could not calculate experiment duration.")
     else:
-        st.write("No global log file found.")
+        st.write("No global log file found. Please restart the config_editor.py file.")
     
     time.sleep(3)  
 
@@ -771,7 +774,7 @@ if st.button("Terminate All") or st.session_state.terminate_flag == True:
             current_index = int(current_index_match.group(1))
             current_index += 1  # Add one to the current_index
         st.success(ira_data_saved_status)
-        logger.info(f'{ira_data_saved_status}')
+        logger_terminate.info(f'{ira_data_saved_status}')
         col1.metric("IRA data", f"{current_index}", "1 pickle file saved")
         os.remove(ira_status_path)
 
@@ -786,7 +789,7 @@ if st.button("Terminate All") or st.session_state.terminate_flag == True:
             current_index += 1  # Add one to the current_index
         col2.metric("SeekThermal data", f"{current_index}", "1 mp4 file saved")
         st.success(seekthermal_data_saved_status)
-        logger.info(f'{seekthermal_data_saved_status}')
+        logger_terminate.info(f'{seekthermal_data_saved_status}')
         os.remove(seekthermal_status_path)
 
     deptcam_status_path = os.path.join("DeptCam", "deptcam_data_saved_status.txt")
@@ -800,7 +803,7 @@ if st.button("Terminate All") or st.session_state.terminate_flag == True:
             current_index += 1  # Add one to the current_index
         col3.metric("Dept and RGB data", f"{current_index}", "1 RGB mp4 and 1 depth mp4 file saved")
         st.success(deptcam_data_saved_status)
-        logger.info(f'{deptcam_data_saved_status}')
+        logger_terminate.info(f'{deptcam_data_saved_status}')
         os.remove(deptcam_status_path)
 
     mmwave_status_path = os.path.join("AWR1843-Read-Data-Python-MMWAVE-SDK-3--master", "mmwave_data_saved_status.txt")
@@ -814,7 +817,7 @@ if st.button("Terminate All") or st.session_state.terminate_flag == True:
             current_index += 1  # Add one to the current_index
         col4.metric("MMwave data", f"{current_index}", "1 pickle file saved")
         st.success(mmwave_data_saved_status)
-        logger.info(f'{mmwave_data_saved_status}')
+        logger_terminate.info(f'{mmwave_data_saved_status}')
         os.remove(mmwave_status_path)
 
     # Reporting where the data and log is stored.
@@ -828,7 +831,7 @@ if st.button("Terminate All") or st.session_state.terminate_flag == True:
             current_index = int(current_index_match.group(1))
             current_index += 1  # Add one to the current_index
         st.success(polar_data_saved_status)
-        logger.info(f'{polar_data_saved_status}')
+        logger_terminate.info(f'{polar_data_saved_status}')
         col5.metric("Polar data", f"{current_index}", "1 pickle file saved")
         os.remove(polar_status_path)
 
@@ -843,7 +846,7 @@ if st.button("Terminate All") or st.session_state.terminate_flag == True:
             current_index += 1  # Add one to the current_index
         col6.metric("Acoustic data", f"{current_index}", "1 .wav saved")
         st.success(acoustic_data_saved_status)
-        logger.info(f'{acoustic_data_saved_status}')
+        logger_terminate.info(f'{acoustic_data_saved_status}')
         os.remove(acoustic_status_path)
 
     # acoustic_status_path = os.path.join("acoustic", "audio", "acoustic_data_saved_status.txt")
@@ -870,7 +873,7 @@ if st.button("Terminate All") or st.session_state.terminate_flag == True:
             current_index += 1  # Add one to the current_index
         col7.metric("UWB data", f"{current_index}", "1 .pickle saved")
         st.success(uwb_data_saved_status)
-        logger.info(f'{uwb_data_saved_status}')
+        logger_terminate.info(f'{uwb_data_saved_status}')
         os.remove(uwb_status_path)
 
     # # Acoustic modality status

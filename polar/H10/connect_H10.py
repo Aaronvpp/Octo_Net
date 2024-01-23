@@ -73,9 +73,9 @@
 #         polar_settings = json.loads(polar_settings_str)
 #         # General setting
 #         output_directory = os.path.dirname(os.path.abspath(__file__))
-#         current_index = get_next_index_polar(output_directory)
+#         current_index_polar = get_next_index_polar(output_directory)
 #         # Log 
-#         logger = setup_logger(output_directory, current_index)
+#         logger = setup_logger(output_directory, current_index_polar)
 #         config_data = {}
 #         for section in config.sections():
 #             if section != 'device_settings':
@@ -128,12 +128,12 @@
 #                         # ecg_data = polar_device.get_ecg_data()
 #                         # logger.info("ecg_data", ecg_data)
 #                         # print("ecg_data", ecg_data)
-#                         # save_timestamp_data_polar(ecg_data, current_index, fake_ntp_timestamp, output_directory, "ecg_data")
+#                         # save_timestamp_data_polar(ecg_data, current_index_polar, fake_ntp_timestamp, output_directory, "ecg_data")
 #                         # ibi_data = polar_device.get_ibi_data()
 #                         hr_data = polar_device.get_hr_data()
 #                         print("get_hr_data", hr_data)
 #                         logger.info("get_hr_data", hr_data)
-#                         file_path =save_timestamp_data_polar(hr_data, current_index, fake_ntp_timestamp, output_directory)
+#                         file_path =save_timestamp_data_polar(hr_data, current_index_polar, fake_ntp_timestamp, output_directory)
 #                         # To calculate the actual sampling rate
 #                         sampler.update_loop()
 #                         # Calculate the total frame
@@ -146,8 +146,8 @@
 #                             pickle_size = os.path.getsize(file_path)
 #                             human_readable_size = convert_size(pickle_size)
 #                             with open(os.path.join(os.path.dirname(__file__), "polar_data_saved_status.txt"), "w") as f:
-#                                 f.write(f"Polar Data saved /polar/H10/data/output_{current_index}.pickle,\n")
-#                                 f.write(f"Polar Log saved /polar/H10/logs/config_{current_index}.log\n")
+#                                 f.write(f"Polar Data saved /polar/H10/data/output_{current_index_polar}.pickle,\n")
+#                                 f.write(f"Polar Log saved /polar/H10/logs/config_{current_index_polar}.log\n")
 #                                 f.write(f"Total frames processed: {frame_counter},\n")
 #                                 f.write(f"Pickle file size: {human_readable_size}\n")
 #                             if os.path.exists('polar_ready.txt'):
@@ -163,8 +163,8 @@
 #                     pickle_size = os.path.getsize(file_path)
 #                     human_readable_size = convert_size(pickle_size)
 #                     with open(os.path.join(os.path.dirname(__file__), "polar_data_saved_status.txt"), "w") as f:
-#                         f.write(f"Polar Data saved /polar/H10/data/output_{current_index}.pickle,\n")
-#                         f.write(f"Polar Log saved /polar/H10/logs/config_{current_index}.log\n")
+#                         f.write(f"Polar Data saved /polar/H10/data/output_{current_index_polar}.pickle,\n")
+#                         f.write(f"Polar Log saved /polar/H10/logs/config_{current_index_polar}.log\n")
 #                         f.write(f"Total frames processed: {frame_counter},\n")
 #                         f.write(f"Pickle file size: {human_readable_size}\n")
 #                 finally:
@@ -263,9 +263,9 @@ async def main():
         polar_settings = json.loads(polar_settings_str)
         # General setting
         output_directory = os.path.dirname(os.path.abspath(__file__))
-        current_index = get_next_index_polar(output_directory)
+        current_index_polar = get_next_index_polar(output_directory)
         # Log 
-        logger = setup_logger(output_directory, current_index)
+        logger = setup_logger(output_directory, current_index_polar)
         config_data = {}
         for section in config.sections():
             if section != 'device_settings':
@@ -318,12 +318,12 @@ async def main():
                         # ecg_data = polar_device.get_ecg_data()
                         # logger.info("ecg_data", ecg_data)
                         # print("ecg_data", ecg_data)
-                        # save_timestamp_data_polar(ecg_data, current_index, fake_ntp_timestamp, output_directory, "ecg_data")
+                        # save_timestamp_data_polar(ecg_data, current_index_polar, fake_ntp_timestamp, output_directory, "ecg_data")
                         # ibi_data = polar_device.get_ibi_data()
                         hr_data = polar_device.get_hr_data()
                         print("get_hr_data", hr_data)
                         logger.info("get_hr_data", hr_data)
-                        file_path =save_timestamp_data_polar(hr_data, current_index, fake_ntp_timestamp, output_directory)
+                        file_path =save_timestamp_data_polar(hr_data, current_index_polar, fake_ntp_timestamp, output_directory)
                         # To calculate the actual sampling rate
                         sampler.update_loop()
                         # Calculate the total frame
@@ -336,8 +336,8 @@ async def main():
                             pickle_size = os.path.getsize(file_path)
                             human_readable_size = convert_size(pickle_size)
                             with open(os.path.join(os.path.dirname(__file__), "polar_data_saved_status.txt"), "w") as f:
-                                f.write(f"Polar Data saved /polar/data/output_{current_index}.pickle,\n")
-                                f.write(f"Polar Log saved /polar/logs/config_{current_index}.log\n")
+                                f.write(f"Polar Data saved /polar/data/output_{current_index_polar}.pickle,\n")
+                                f.write(f"Polar Log saved /polar/logs/config_{current_index_polar}.log\n")
                                 f.write(f"Total frames processed: {frame_counter},\n")
                                 f.write(f"Pickle file size: {human_readable_size}\n")
                             if os.path.exists('polar_ready.txt'):
@@ -353,8 +353,8 @@ async def main():
                     pickle_size = os.path.getsize(file_path)
                     human_readable_size = convert_size(pickle_size)
                     with open(os.path.join(os.path.dirname(__file__), "polar_data_saved_status.txt"), "w") as f:
-                        f.write(f"Polar Data saved /polar/data/output_{current_index}.pickle,\n")
-                        f.write(f"Polar Log saved /polar/logs/config_{current_index}.log\n")
+                        f.write(f"Polar Data saved /polar/data/output_{current_index_polar}.pickle,\n")
+                        f.write(f"Polar Log saved /polar/logs/config_{current_index_polar}.log\n")
                         f.write(f"Total frames processed: {frame_counter},\n")
                         f.write(f"Pickle file size: {human_readable_size}\n")
                 finally:

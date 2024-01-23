@@ -60,6 +60,30 @@ def setup_logger_global(output_directory, index):
 
     return logger
 
+# Setting up the logger
+def setup_logger_global_terminate(output_directory, index):
+    log_directory = os.path.join(output_directory, 'logs')
+    if not os.path.exists(log_directory):
+        os.makedirs(log_directory)
+
+    log_filename = os.path.join(log_directory, 'config_{}.log'.format(index))
+
+    # Create a unique logger name using the index
+    logger_name = "global_logger_{}".format(index)
+    
+    # Check if the logger already exists, if so return the existing logger
+    if logger_name in logging.root.manager.loggerDict:
+        return logging.getLogger(logger_name)
+
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(logging.INFO)
+
+    file_handler = logging.FileHandler(log_filename, mode='a')
+    file_formatter = NtpLogFormatter('Local Time: %(asctime)s [%(levelname)s] NTP Time: [%(ntp_time)s]: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+    file_handler.setFormatter(file_formatter)
+    logger.addHandler(file_handler)
+
+    return logger
 
 
 # Usage example
