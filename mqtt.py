@@ -7,6 +7,7 @@ import subprocess
 from datetime import datetime
 import os
 import sys
+import requests
 
 def load_config(file_path):
     config = configparser.ConfigParser()
@@ -53,6 +54,13 @@ st.write("Reminder: The center server's configs will not overwrite the configs i
 if st.button("Mode 1: Start without overwrite"):
     client.publish("command/start", "start_command_payload", qos=2)
 
+
+
+    
+    
+
+
+
 if st.button("Mode 1: Terminate"):
     client.publish("command/terminate", "terminate_command_payload", qos=2)
 
@@ -83,6 +91,7 @@ config.set("participant", "weight", str(participant_weight))
 
 # Display and edit the [experiment] section
 st.sidebar.subheader("Experiment")
+experiment_id = st.sidebar.text_input("ID", config.get("experiment", "id"))
 experiment_date = st.sidebar.date_input("Date", value=datetime.strptime(config.get("experiment", "date"), "%Y-%m-%d"))
 experiment_time = st.sidebar.time_input("Time", value=datetime.strptime(config.get("experiment", "time"), "%H:%M:%S").time())
 experiment_condition = st.sidebar.text_input("Condition", config.get("experiment", "condition"))
@@ -90,6 +99,7 @@ experiment_group = st.sidebar.text_input("Group", config.get("experiment", "grou
 experiment_illumination_level = st.sidebar.text_input("Illumination Level", config.get("experiment", "illumination_level"))
 
 # Update the [experiment] section with the new values
+config.set("experiment", "id", str(experiment_id))
 config.set("experiment", "date", str(experiment_date))
 config.set("experiment", "time", str(experiment_time))
 config.set("experiment", "condition", experiment_condition)
@@ -122,7 +132,7 @@ config.set("label_info", "activity", activity_label)
 st.subheader("Device Settings")
 
 # Create columns for each device
-col1, col2, col3, col4, col5, col6 = st.columns(6)
+col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
 
 # IRA device settings
 with col1:
@@ -359,7 +369,34 @@ with col6:
         }
     }
 
+with col7:
+    st.markdown("**UWB**")
+    uwb_json = json.loads(config.get("device_settings", "uwb"))
+    uwb_data_storage_location = st.text_input("Data Storage Location", uwb_json["Data storage location"])
+    uwb_datatype = st.text_input("uwb_Datatype", uwb_json["uwb_Datatype"])
+    uwb_min_dist = st.text_input("min_distance", uwb_json["min_distance"])
+    uwb_max_dist= st.text_input("max_distance", uwb_json["max_distance"])
 
+    uwb_json["Data storage location"] = uwb_data_storage_location
+    uwb_json["uwb_Datatype"] = uwb_datatype
+    uwb_json["min_distance"] = uwb_min_dist
+    uwb_json["max_distance"] = uwb_max_dist
+    config.set("device_settings", "uwb", json.dumps(uwb_json))
+
+# Function to send HTTP request
+def send_http_request(rpi_ip, url):
+    full_url = f"http://{rpi_ip}:5000/{url}"
+    try:
+        response = requests.get(full_url)
+        if response.status_code == 200:
+            st.success(f"Successfully executed {url}")
+            return response.json()
+        else:
+            st.error(f"Failed to execute {url}. Status code: {response.status_code}")
+    except Exception as e:
+        st.error(f"An error occurred: {e}")
+
+start_wifi = st.checkbox("Start WIFI modality")
 if st.button("Mode 2: Overwrite nodes' configs and Run"):
     save_config(config, ini_file_path)
     # Serialize the updated config data into a JSON string
@@ -368,9 +405,22 @@ if st.button("Mode 2: Overwrite nodes' configs and Run"):
     # Publish the JSON string to the MQTT topic
     client.publish("config/update", config_json, qos=2)
     client.publish("command/start", "start_command_payload", qos=2)
+    # GET HTTP/2 192.168.1.x:5000/<API>
+    # API: 
+    # /info: check Network card info
+    # /ping/start | stop | status: Create data stream
+    # /enable-csi | disable-csi: enable csi collection
+    # /size: size of collected data
+    # HTTP GET request to start the device
+    # Retrieve the experiment ID from the config and start the experiment
+    if start_wifi:
+        experiment_id = config.get("experiment", "id")
+        # for _ in RPI_IPS:
+        st.write(send_http_request("192.168.1.102",f"experiment/start?exp_name={experiment_id}"))
 
 if st.button("Mode 2: Terminate "):
     client.publish("command/terminate", "terminate_command_payload", qos=2)
-
+    if start_wifi:
+        st.write(send_http_request("192.168.1.102","experiment/stop"))
 
 client.loop_start()  

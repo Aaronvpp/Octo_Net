@@ -316,6 +316,8 @@ import math
 import pymoduleconnector
 from pymoduleconnector import DataType
 import time
+import json
+import configparser
 
 __version__ = 3
 # For receiving the termination signal from the streamlit
@@ -372,6 +374,18 @@ def simple_xep_plot(device_name, record=False, baseband=False):
         
     file_path = os.path.join(data_folder, 'output_{}.pickle'.format(experiment_idx))
     logger = setup_logger(output_directory, experiment_idx)
+    config = configparser.ConfigParser()
+    config.read(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../../../../../config.ini')))
+    uwb_settings_str = config.get('device_settings', 'uwb')
+    uwb_settings = json.loads(uwb_settings_str)
+    min_dist = uwb_settings['min_distance']
+    max_dist = uwb_settings['max_distance']
+    config_data = {}
+    for section in config.sections():
+        if section != 'device_settings':
+            config_data[section] = dict(config.items(section))
+    logger.info("Loaded configuration: {}".format(config_data))
+    logger.info("Loaded UWB configuration: {}".format(uwb_settings))
     with open(file_path, 'ab') as f:
         
         timeflag = True
@@ -412,7 +426,7 @@ def simple_xep_plot(device_name, record=False, baseband=False):
         # Start streaming of data
         xep.x4driver_set_fps(FPS)
         # xep.x4driver_set_frame_area_offset(0)
-        xep.x4driver_set_frame_area(0,5)
+        xep.x4driver_set_frame_area(float(min_dist),float(max_dist))
 
         def read_frame(f,timeflag):
             """Gets frame data from module"""

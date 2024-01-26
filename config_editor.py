@@ -102,6 +102,7 @@ process_dict = {
     "Acoustic Recorder": {"pid": None},
     "Acoustic Player": {"pid": None},
     "uwb":{"pid": None},
+    "ToF":{"pid": None},
     }
 if "process_polar" not in st.session_state:
     st.session_state.process_polar = []
@@ -156,7 +157,7 @@ def get_experiment_duration(log_file_path):
 
 
 def update_modality_status(status_placeholder):
-    ordered_process_names = ["IRA", "Depth Camera", "MMWave", "SeekThermal", "Polar", "Acoustic Recorder", "Acoustic Player", "uwb"]
+    ordered_process_names = ["IRA", "Depth Camera", "MMWave", "SeekThermal", "Polar", "Acoustic Recorder", "Acoustic Player", "uwb", "ToF"]
     try:
         with open(os.path.abspath(os.path.join(os.path.dirname(__file__), "status.json")), "r") as f:
             status_dict = json.load(f)
@@ -240,6 +241,7 @@ config.set("participant", "weight", str(participant_weight))
 
 # Display and edit the [experiment] section
 st.sidebar.subheader("Experiment")
+experiment_id = st.sidebar.text_input("ID", config.get("experiment", "id"))
 experiment_date = st.sidebar.date_input("Date", value=datetime.strptime(config.get("experiment", "date"), "%Y-%m-%d"))
 experiment_time = st.sidebar.time_input("Time", value=datetime.strptime(config.get("experiment", "time"), "%H:%M:%S").time())
 experiment_condition = st.sidebar.text_input("Condition", config.get("experiment", "condition"))
@@ -279,7 +281,7 @@ config.set("label_info", "activity", activity_label)
 st.subheader("Device Settings")
 
 # Create columns for each device
-col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
+col1, col2, col3, col4, col5, col6, col7, col8 = st.columns(8)
 
 # IRA device settings
 with col1:
@@ -534,6 +536,20 @@ with col6:
     with open("./acoustic/config_file/config_Kasami.json", 'w') as json_file:
         json.dump(json_data, json_file, indent=4)
 
+with col7:
+    st.markdown("**UWB**")
+    uwb_json = json.loads(config.get("device_settings", "uwb"))
+    uwb_data_storage_location = st.text_input("Data Storage Location", uwb_json["Data storage location"])
+    uwb_datatype = st.text_input("uwb_Datatype", uwb_json["uwb_Datatype"])
+    uwb_min_dist = st.text_input("min_distance", uwb_json["min_distance"])
+    uwb_max_dist= st.text_input("max_distance", uwb_json["max_distance"])
+
+    uwb_json["Data storage location"] = uwb_data_storage_location
+    uwb_json["uwb_Datatype"] = uwb_datatype
+    uwb_json["min_distance"] = uwb_min_dist
+    uwb_json["max_distance"] = uwb_max_dist
+    config.set("device_settings", "uwb", json.dumps(uwb_json))
+
 # Add checkboxes for each modality
 st.subheader("Select Modalities to Start")
 start_ira = st.checkbox("Start IRA")
@@ -543,7 +559,8 @@ start_seekthermal = st.checkbox("Start Seek Thermal")
 start_acoustic_recorder = st.checkbox("Start Acoustic Recorder")
 start_acoustic_player = st.checkbox("Start Acoustic Player")
 start_uwb = st.checkbox("Start UWB")
-# start_polar = st.checkbox("Start Polar")
+start_ToF = st.checkbox("Start ToF")
+
 st.write("Reminder: As a Node, the configs above maybe overwritten by the Center Server. Please refresh this page if you want to edit the configs of this node.")
 # print("st.session_state.start_flag222", st.session_state.start_flag)
 if st.button("Connect to Polar H10"):
@@ -664,6 +681,7 @@ if st.button("Save and Run") or st.session_state.start_flag == True:
         logger.info("Acoustic Player starts playing")
         processes.append(process)
 
+    
     if start_uwb:
         # if start_polar:
         #         wait_for_polar_ready()
@@ -680,6 +698,12 @@ if st.button("Save and Run") or st.session_state.start_flag == True:
         process_dict["uwb"]["pid"] = process_uwb.pid
         logger.info(f"UWB starts recording")
         processes.append(process_uwb)
+    
+    if start_ToF:
+        process = subprocess.Popen([PYTHON_EXE, "ToF/Tof.py"], cwd="/home/aiot-mini/code/")
+        process_dict["ToF"]["pid"] = process.pid
+        logger.info(f"ToF starts recording")
+        processes.append(process)
 
     process_dict["Polar"]["pid"] = st.session_state.process_dict_polar["Polar"]["pid"]
     processes.append(st.session_state.process_polar)
@@ -761,7 +785,7 @@ if st.button("Terminate All") or st.session_state.terminate_flag == True:
         st.write("All processes are terminated.")
 
     # Metric
-    col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
+    col1, col2, col3, col4, col5, col6, col7, col8 = st.columns(8)
  
     # Reporting where the data and log is stored.
     ira_status_path = os.path.join("IRA", "ira_data_saved_status.txt")
@@ -875,6 +899,20 @@ if st.button("Terminate All") or st.session_state.terminate_flag == True:
         st.success(uwb_data_saved_status)
         logger_terminate.info(f'{uwb_data_saved_status}')
         os.remove(uwb_status_path)
+
+    ToF_status_path = os.path.join("ToF", "ToF_data_saved_status.txt")
+    if os.path.exists(ToF_status_path):
+        with open(ToF_status_path, "r") as f:
+            ToF_data_saved_status = f.read()
+            # Extract current_index using regex
+        current_index_match = re.search(r"_([0-9]+)\.pickle", ToF_data_saved_status)
+        if current_index_match:
+            current_index = int(current_index_match.group(1))
+            current_index += 1  # Add one to the current_index
+        col8.metric("ToF data", f"{current_index}", "1 .pickle saved")
+        st.success(ToF_data_saved_status)
+        logger_terminate.info(f'{ToF_data_saved_status}')
+        os.remove(ToF_status_path)
 
     # # Acoustic modality status
     # acoustic_status_path = os.path.join("acoustic", "acoustic_data_saved_status.txt")
