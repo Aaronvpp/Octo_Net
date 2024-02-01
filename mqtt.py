@@ -6,7 +6,7 @@ import json
 import subprocess
 from datetime import datetime
 import os
-import sys
+from time_utils import *
 import requests
 
 def load_config(file_path):
@@ -401,6 +401,7 @@ if st.button("Mode 2: Overwrite nodes' configs and Run"):
     # Serialize the updated config data into a JSON string
     config_json = json.dumps({section: dict(config.items(section)) for section in config.sections()})
     st.success("All nodes' config files are overwritten.")
+    
     # Publish the JSON string to the MQTT topic
     client.publish("config/update", config_json, qos=2)
     client.publish("command/start", "start_command_payload", qos=2)
@@ -413,9 +414,17 @@ if st.button("Mode 2: Overwrite nodes' configs and Run"):
     # HTTP GET request to start the device
     # Retrieve the experiment ID from the config and start the experiment
     if start_wifi:
+        # Modify the naming protocode
+        participant_id = config.get('participant', 'id')
+        trial_number = config.get('task_info', 'trial_number')
+        activity = config.get('label_info', 'activity')
+        starttimestamp, _ = get_ntp_time_and_difference()
+        # Format the timestamp to exclude microseconds (down to seconds)
+        starttimestamp = starttimestamp.strftime("%Y%m%d%H%M%S")
+        file_name = f"{starttimestamp}_node_1_modality_wifi_subject_{participant_id}_activity_{activity}_trial_{trial_number}"
         experiment_id = config.get("experiment", "id")
         # for _ in RPI_IPS:
-        st.write(send_http_request("192.168.1.102",f"experiment/start?exp_name={experiment_id}"))
+        st.write(send_http_request("192.168.1.102",f"experiment/start?exp_name={file_name}"))
 
 if st.button("Mode 2: Terminate "):
     client.publish("command/terminate", "terminate_command_payload", qos=2)

@@ -883,11 +883,14 @@ if st.button("Terminate All") or st.session_state.terminate_flag == True:
         with open(acoustic_status_path, "r") as f:
             acoustic_data_saved_status = f.read()
             # Extract current_index using regex
+        acoustic_audio_dir = os.path.join("acoustic", "audio", "data")
+        directories = [d for d in os.listdir(acoustic_audio_dir) if os.path.isdir(os.path.join(acoustic_audio_dir, d)) and "node" in d]
+        directory_count = len(directories)
         current_index_match = re.search(r"_([0-9]+)\.wav", acoustic_data_saved_status)
         if current_index_match:
             current_index = int(current_index_match.group(1))
             current_index += 1  # Add one to the current_index
-        col6.metric("Acoustic data", f"{current_index}", "1 .wav saved")
+        col6.metric("Acoustic data", f"{directory_count}", "1 record/play acoustic file saved")
         st.success(acoustic_data_saved_status)
         logger_terminate.info(f'{acoustic_data_saved_status}')
         os.remove(acoustic_status_path)
