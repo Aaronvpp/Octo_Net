@@ -373,9 +373,20 @@ def simple_xep_plot(device_name, record=False, baseband=False):
         os.makedirs(data_folder)
         
     file_path = os.path.join(data_folder, 'output_{}.pickle'.format(experiment_idx))
-    logger = setup_logger(output_directory, experiment_idx)
+    
     config = configparser.ConfigParser()
     config.read(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../../../../../config.ini')))
+    
+    # Modify the naming protocode
+    participant_id = config.get('participant', 'id')
+    trial_number = config.get('task_info', 'trial_number')
+    activity = config.get('label_info', 'activity')
+    starttimestamp, _ = get_ntp_time_and_difference()
+    # Format the timestamp to exclude microseconds (down to seconds)
+    starttimestamp = starttimestamp.strftime("%Y%m%d%H%M%S")
+    file_name = "{}_node_1_modality_uwb_subject_{}_activity_{}_trial_{}".format(starttimestamp, participant_id, activity, trial_number)
+    
+    logger = setup_logger(output_directory, file_name)
     uwb_settings_str = config.get('device_settings', 'uwb')
     uwb_settings = json.loads(uwb_settings_str)
     min_dist = uwb_settings['min_distance']
@@ -465,8 +476,8 @@ def simple_xep_plot(device_name, record=False, baseband=False):
                 pickle_size = os.path.getsize(file_path)
                 human_readable_size = convert_size(pickle_size)
                 with open(os.path.join(os.path.dirname(__file__), "uwb_data_saved_status.txt"), "w") as h:
-                    h.write("uwb Data saved /uwb/data/output_{}.pickle,\n".format(experiment_idx))
-                    h.write("uwb Log saved /uwb/logs/config_{}.log\n".format(experiment_idx))
+                    h.write("uwb Data saved /uwb/data/{}.pickle,\n".format(file_name))
+                    h.write("uwb Log saved /uwb/logs/{}.log\n".format(file_name))
                     h.write("Total frames processed: {},\n".format(frame_counter_uwb))
                     h.write("Pickle file size: {}\n".format(human_readable_size))
                 return

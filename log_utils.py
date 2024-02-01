@@ -18,12 +18,12 @@ class NtpLogFormatter(logging.Formatter):
 
 
 # Setting up the logger
-def setup_logger(output_directory, index):
+def setup_logger(output_directory, file_name):
     log_directory = os.path.join(output_directory, 'logs')
     if not os.path.exists(log_directory):
         os.makedirs(log_directory)
 
-    log_filename = os.path.join(log_directory, 'config_{}.log'.format(index))  # Changed to use format
+    log_filename = os.path.join(log_directory, '{}.log'.format(file_name))  # Changed to use format
 
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)

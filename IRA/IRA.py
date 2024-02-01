@@ -342,6 +342,15 @@ def main():
     # Initial config.ini
     config = configparser.ConfigParser()
     config.read(os.path.abspath(os.path.join(os.path.dirname(__file__), '../config.ini')))
+    # Modify the naming protocode
+    participant_id = config.get('participant', 'id')
+    trial_number = config.get('task_info', 'trial_number')
+    activity = config.get('label_info', 'activity')
+    starttimestamp, _ = get_ntp_time_and_difference()
+    # Format the timestamp to exclude microseconds (down to seconds)
+    starttimestamp = starttimestamp.strftime("%Y%m%d%H%M%S")
+    file_name = f"{starttimestamp}_node_1_modality_ira_subject_{participant_id}_activity_{activity}_trial_{trial_number}"
+    
     ira_settings_str = config.get('device_settings', 'ira')
     ira_settings = json.loads(ira_settings_str)
     # Open serial port (example with '/dev/tty.SLAB_USBtoUART' replace with your port and desired baud rate)
@@ -353,7 +362,7 @@ def main():
     output_directory = os.path.dirname(os.path.abspath(__file__))
     current_index = get_next_index(output_directory)
     # Log 
-    logger = setup_logger(output_directory, current_index)
+    logger = setup_logger(output_directory, file_name)
     config_data = {}
     for section in config.sections():
         if section != 'device_settings':
@@ -378,7 +387,7 @@ def main():
         if not os.path.exists(data_folder):
             os.makedirs(data_folder)
 
-        file_path = os.path.join(data_folder, f'output_{current_index}.pickle')
+        file_path = os.path.join(data_folder, f'{file_name}.pickle')
         with open(file_path, 'ab') as f:
             while True:
                 # print("data_filename", data_filename)
@@ -437,8 +446,8 @@ def main():
                     pickle_size = os.path.getsize(file_path)
                     human_readable_size = convert_size(pickle_size)
                     with open(os.path.join(os.path.dirname(__file__), "ira_data_saved_status.txt"), "w") as f:
-                        f.write(f"IRA Data saved /IRA/data/output_{current_index}.pickle,\n")
-                        f.write(f"IRA Log saved /IRA/logs/config_{current_index}.log,\n")
+                        f.write(f"IRA Data saved /IRA/data/{file_name}.pickle,\n")
+                        f.write(f"IRA Log saved /IRA/logs/{file_name}.log,\n")
                         f.write(f"Total frames processed: {frame_counter},\n")
                         f.write(f"Pickle file size: {human_readable_size}\n")
                     break

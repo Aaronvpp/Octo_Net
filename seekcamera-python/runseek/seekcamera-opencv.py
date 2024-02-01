@@ -148,9 +148,17 @@ def main():
     experiment_idx = get_next_index_seekthermal(output_directory)
     # current_index = get_next_index(output_directory)
     window_name = "Seek Thermal - Python OpenCV Sample"
+    # Modify the naming protocode
+    participant_id = config.get('participant', 'id')
+    trial_number = config.get('task_info', 'trial_number')
+    activity = config.get('label_info', 'activity')
+    starttimestamp, _ = get_ntp_time_and_difference()
+    # Format the timestamp to exclude microseconds (down to seconds)
+    starttimestamp = starttimestamp.strftime("%Y%m%d%H%M%S")
+    file_name = f"{starttimestamp}_node_1_modality_seekthermal_subject_{participant_id}_activity_{activity}_trial_{trial_number}"
     # cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
     timeflag = True
-    logger = setup_logger(output_directory, experiment_idx)
+    logger = setup_logger(output_directory, file_name)
     config_data = {}
     for section in config.sections():
         if section != 'device_settings':
@@ -167,7 +175,7 @@ def main():
         os.makedirs(data_folder)
 
     file_path = os.path.join(data_folder, f'output_{experiment_idx}.pickle')
-    thermal_video_filename = os.path.join(data_folder, f'thermal_{experiment_idx}.mp4')
+    thermal_video_filename = os.path.join(data_folder, f'{file_name}.mp4')
     
     # Open the file in append mode ('ab')
     #with open(file_path, 'ab') as f:
@@ -244,15 +252,15 @@ def main():
                 mp4_size = os.path.getsize(thermal_video_filename)
                 human_readable_mp4_size = convert_size(mp4_size)
                 logger.info("End recording by a terminate action.")
-                with open(os.path.join(data_folder, f'timestamps_{experiment_idx}.txt'), 'w') as f:
+                with open(os.path.join(data_folder, f'timestamps_{file_name}.txt'), 'w') as f:
                     for timestamp in seekthermal_video_timestamps:
                         f.write(f"{timestamp}\n")
                 #pickle_size = os.path.getsize(file_path)
                 #human_readable_size = convert_size(pickle_size)
                 with open(os.path.join(os.path.dirname(__file__), "seekthermal_data_saved_status.txt"), "w") as f:
                     #f.write(f"seekthermal Data saved seekcamera-python/runseek/data/output_{experiment_idx}.pickle,\n")
-                    f.write(f"seekthermal Data saved /seekThermal/data/thermal_{experiment_idx}.mp4\n")
-                    f.write(f"seekthermal Log saved /seekThermal/logs/config_{experiment_idx}.log\n")
+                    f.write(f"seekthermal Data saved /seekThermal/data/{file_name}.mp4\n")
+                    f.write(f"seekthermal Log saved /seekThermal/logs/{file_name}.log\n")
                     f.write(f"Total frames processed: {frame_counter},\n")
                     f.write(f"Thermal video file size: {human_readable_mp4_size}\n")
                     #f.write(f"Pickle file size: {human_readable_size}\n")

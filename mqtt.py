@@ -124,8 +124,7 @@ config.set("notes", "comments", notes_comments)
 
 # Display and edit the [label] section
 st.sidebar.subheader("**Label Info**")
-activity_options = ["sit", "jump", "dance", "stand", "walk"]  # Add more activities as needed
-activity_label = st.sidebar.selectbox("Activity", options=activity_options, index=activity_options.index(config.get("label_info", "activity")))
+activity_label = st.sidebar.text_input("Activity", value=config.get("label_info", "activity"))
 config.set("label_info", "activity", activity_label)
 
 # Display and edit the [device_settings] section
@@ -280,18 +279,18 @@ with col4:
 
 with col5:
     st.markdown("**Polar Only can be set on one node page**")
-    # polar_json = json.loads(config.get("device_settings", "polar"))
-    # polar_record_len = st.text_input("Record Length (in seconds)", polar_json["record_len(in_second)"])
-    # polar_data_storage_location = st.text_input("Data Storage Location", polar_json["Data storage location"])
-    # polar_datatype = st.text_input("polar_Datatype", polar_json["polar_Datatype"])
+    polar_json = json.loads(config.get("device_settings", "polar"))
+    polar_record_len = st.text_input("Record Length (in seconds)", polar_json["record_len(in_second)"])
+    polar_data_storage_location = st.text_input("Data Storage Location", polar_json["Data storage location"])
+    polar_datatype = st.text_input("polar_Datatype", polar_json["polar_Datatype"])
     
     
-    # polar_json["record_len(in_second)"] = polar_record_len
-    # polar_json["Data storage location"] = polar_data_storage_location
-    # polar_json["polar_Datatype"] = polar_datatype
+    polar_json["record_len(in_second)"] = polar_record_len
+    polar_json["Data storage location"] = polar_data_storage_location
+    polar_json["polar_Datatype"] = polar_datatype
     
     
-    # config.set("device_settings", "polar", json.dumps(polar_json))
+    config.set("device_settings", "polar", json.dumps(polar_json))
 
 with col6:
     st.markdown("**Acoustic Recorder Settings**")

@@ -273,8 +273,7 @@ config.set("notes", "comments", notes_comments)
 
 # Display and edit the [label] section
 st.sidebar.subheader("**Label Info**")
-activity_options = ["sit", "jump", "dance", "stand", "walk"]  # Add more activities as needed
-activity_label = st.sidebar.selectbox("Activity", options=activity_options, index=activity_options.index(config.get("label_info", "activity")))
+activity_label = st.sidebar.text_input("Activity", value=config.get("label_info", "activity"))
 config.set("label_info", "activity", activity_label)
 
 # Display and edit the [device_settings] section
@@ -428,19 +427,19 @@ with col4:
     #         st.write("MMWave modality is ended.")
 
 with col5:
-    st.markdown("**Polar**")
-    polar_json = json.loads(config.get("device_settings", "polar"))
-    polar_record_len = st.text_input("Record Length (in seconds)", polar_json["record_len(in_second)"])
-    polar_data_storage_location = st.text_input("Data Storage Location", polar_json["Data storage location"])
-    polar_datatype = st.text_input("polar_Datatype", polar_json["polar_Datatype"])
+    st.markdown("**Polar only can be set on server's page**")
+    # polar_json = json.loads(config.get("device_settings", "polar"))
+    # polar_record_len = st.text_input("Record Length (in seconds)", polar_json["record_len(in_second)"])
+    # polar_data_storage_location = st.text_input("Data Storage Location", polar_json["Data storage location"])
+    # polar_datatype = st.text_input("polar_Datatype", polar_json["polar_Datatype"])
     
     
-    polar_json["record_len(in_second)"] = polar_record_len
-    polar_json["Data storage location"] = polar_data_storage_location
-    polar_json["polar_Datatype"] = polar_datatype
+    # polar_json["record_len(in_second)"] = polar_record_len
+    # polar_json["Data storage location"] = polar_data_storage_location
+    # polar_json["polar_Datatype"] = polar_datatype
     
     
-    config.set("device_settings", "polar", json.dumps(polar_json))
+    # config.set("device_settings", "polar", json.dumps(polar_json))
 
     # if st.button("Start Polar heart rate tracking"):
     #     processes.append(subprocess.Popen(["python","polar/H10/connect_H10.py"], cwd="/home/aiot-mini/code/"))
@@ -614,7 +613,6 @@ if st.button("Save and Run") or st.session_state.start_flag == True:
     output_directory = os.path.dirname(os.path.abspath(__file__))
     current_index = get_next_index_global_log(output_directory)
     print(current_index, "currentindex")
-    
     logger = setup_logger_global(output_directory, current_index)
     config_data = {}
     for section in config.sections():
@@ -786,77 +784,98 @@ if st.button("Terminate All") or st.session_state.terminate_flag == True:
 
     # Metric
     col1, col2, col3, col4, col5, col6, col7, col8 = st.columns(8)
- 
+    # Function to count the number of pickle files in a directory
+    def count_pickle_files(directory):
+        pickle_files = glob.glob(os.path.join(directory, '*.pickle'))
+        return len(pickle_files)
+    
+    def count_mp4_files(directory):
+        mp4_files = glob.glob(os.path.join(directory, '*.mp4'))
+        return len(mp4_files)
     # Reporting where the data and log is stored.
     ira_status_path = os.path.join("IRA", "ira_data_saved_status.txt")
     if os.path.exists(ira_status_path):
         with open(ira_status_path, "r") as f:
             ira_data_saved_status = f.read()
-        # Extract current_index using regex
-        current_index_match = re.search(r"output_(\d+).pickle", ira_data_saved_status)
-        if current_index_match:
-            current_index = int(current_index_match.group(1))
-            current_index += 1  # Add one to the current_index
+
         st.success(ira_data_saved_status)
         logger_terminate.info(f'{ira_data_saved_status}')
-        col1.metric("IRA data", f"{current_index}", "1 pickle file saved")
+
+        # Assuming the pickle files are stored in the 'data' subdirectory of 'IRA'
+        ira_data_directory = os.path.join("IRA", "data")
+        number_of_pickles = count_pickle_files(ira_data_directory)
+
+        col1.metric("IRA data", f"{number_of_pickles}", "pickle files saved")
         os.remove(ira_status_path)
 
     seekthermal_status_path = os.path.join("seekcamera-python","runseek", "seekthermal_data_saved_status.txt")
     if os.path.exists(seekthermal_status_path):
         with open(seekthermal_status_path, "r") as f:
             seekthermal_data_saved_status = f.read()
-            # Extract current_index using regex
-        current_index_match = re.search(r"thermal_(\d+).mp4", seekthermal_data_saved_status)
-        if current_index_match:
-            current_index = int(current_index_match.group(1))
-            current_index += 1  # Add one to the current_index
-        col2.metric("SeekThermal data", f"{current_index}", "1 mp4 file saved")
-        st.success(seekthermal_data_saved_status)
-        logger_terminate.info(f'{seekthermal_data_saved_status}')
+            st.success(seekthermal_data_saved_status)
+            logger_terminate.info(f'{seekthermal_data_saved_status}')
+
+        # Assuming the mp4 files are stored in a specific directory
+        # Replace 'your_mp4_directory' with the actual directory where the mp4 files are stored
+        seekthermal_mp4_directory = os.path.join("seekcamera-python", "runseek", "data")
+        number_of_mp4s = count_mp4_files(seekthermal_mp4_directory)
+
+        col2.metric("SeekThermal data", f"{number_of_mp4s}", "mp4 files saved")
         os.remove(seekthermal_status_path)
 
+    # Function to count the number of directories matching the specific pattern
+    def count_matching_directories(base_directory, pattern):
+        matching_directories = [name for name in os.listdir(base_directory)
+                                if os.path.isdir(os.path.join(base_directory, name))
+                                and re.match(pattern, name)]
+        return len(matching_directories)
+
+    # Reporting where the DeptCam data is stored
     deptcam_status_path = os.path.join("DeptCam", "deptcam_data_saved_status.txt")
     if os.path.exists(deptcam_status_path):
         with open(deptcam_status_path, "r") as f:
             deptcam_data_saved_status = f.read()
-            # Extract current_index using regex
-        current_index_match = re.search(r"output_(\d+)", deptcam_data_saved_status)
-        if current_index_match:
-            current_index = int(current_index_match.group(1))
-            current_index += 1  # Add one to the current_index
-        col3.metric("Dept and RGB data", f"{current_index}", "1 RGB mp4 and 1 depth mp4 file saved")
+
         st.success(deptcam_data_saved_status)
         logger_terminate.info(f'{deptcam_data_saved_status}')
+
+        # Assuming the directories are stored in a specific directory
+        deptcam_directory = os.path.join("DeptCam","data")
+        directory_pattern = r'\d{14}_node_\d+_modality_depthcam_subject_\d+_activity_\w+_trial_\d+'
+        number_of_directories = count_matching_directories(deptcam_directory, directory_pattern)
+
+        col3.metric("Dept and RGB data", f"{number_of_directories}", "RGB and depth directories saved")
         os.remove(deptcam_status_path)
 
     mmwave_status_path = os.path.join("AWR1843-Read-Data-Python-MMWAVE-SDK-3--master", "mmwave_data_saved_status.txt")
     if os.path.exists(mmwave_status_path):
         with open(mmwave_status_path, "r") as f:
             mmwave_data_saved_status = f.read()
-            # Extract current_index using regex
-        current_index_match = re.search(r"output_(\d+).pickle", mmwave_data_saved_status)
-        if current_index_match:
-            current_index = int(current_index_match.group(1))
-            current_index += 1  # Add one to the current_index
-        col4.metric("MMwave data", f"{current_index}", "1 pickle file saved")
-        st.success(mmwave_data_saved_status)
-        logger_terminate.info(f'{mmwave_data_saved_status}')
+            st.success(mmwave_data_saved_status)
+            logger_terminate.info(f'{mmwave_data_saved_status}')
+
+        # Assuming the pickle files are stored in a specific directory
+        # Replace 'your_pickle_directory' with the actual directory where the pickle files are stored
+        mmwave_pickle_directory = os.path.join("AWR1843-Read-Data-Python-MMWAVE-SDK-3--master", "data")
+        number_of_pickles = count_pickle_files(mmwave_pickle_directory)
+
+        col4.metric("MMwave data", f"{number_of_pickles}", "pickle files saved")
         os.remove(mmwave_status_path)
 
-    # Reporting where the data and log is stored.
+    # Reporting where the Polar data is stored
     polar_status_path = os.path.join("polar", "H10", "polar_data_saved_status.txt")
     if os.path.exists(polar_status_path):
         with open(polar_status_path, "r") as f:
             polar_data_saved_status = f.read()
-        # Extract current_index using regex
-        current_index_match = re.search(r"output_(\d+).pickle", polar_data_saved_status)
-        if current_index_match:
-            current_index = int(current_index_match.group(1))
-            current_index += 1  # Add one to the current_index
-        st.success(polar_data_saved_status)
-        logger_terminate.info(f'{polar_data_saved_status}')
-        col5.metric("Polar data", f"{current_index}", "1 pickle file saved")
+            st.success(polar_data_saved_status)
+            logger_terminate.info(f'{polar_data_saved_status}')
+
+        # Assuming the pickle files are stored in a specific directory
+        # Replace 'your_pickle_directory' with the actual directory where the pickle files are stored
+        polar_pickle_directory = os.path.join("polar", "H10", "data")
+        number_of_pickles = count_pickle_files(polar_pickle_directory)
+
+        col5.metric("Polar data", f"{number_of_pickles}", "pickle files saved")
         os.remove(polar_status_path)
 
     acoustic_status_path = os.path.join("acoustic", "audio", "acoustic_data_saved_status.txt")
@@ -886,32 +905,35 @@ if st.button("Terminate All") or st.session_state.terminate_flag == True:
     #     st.success(acoustic_data_saved_status)
     #     os.remove(acoustic_status_path)
 
-    uwb_status_path = os.path.join("uwb","Legacy-SW","ModuleConnector","ModuleConnector-unix-1","python35-x86_64-linux-gnu","pymoduleconnector","examples","uwb_data_saved_status.txt")
+    uwb_status_path = os.path.join("uwb", "Legacy-SW", "ModuleConnector", "ModuleConnector-unix-1", "python35-x86_64-linux-gnu", "pymoduleconnector", "examples", "uwb_data_saved_status.txt")
     if os.path.exists(uwb_status_path):
         with open(uwb_status_path, "r") as f:
             uwb_data_saved_status = f.read()
-            # Extract current_index using regex
-        current_index_match = re.search(r"_([0-9]+)\.pickle", uwb_data_saved_status)
-        if current_index_match:
-            current_index = int(current_index_match.group(1))
-            current_index += 1  # Add one to the current_index
-        col7.metric("UWB data", f"{current_index}", "1 .pickle saved")
-        st.success(uwb_data_saved_status)
-        logger_terminate.info(f'{uwb_data_saved_status}')
+            st.success(uwb_data_saved_status)
+            logger_terminate.info(f'{uwb_data_saved_status}')
+
+        # Assuming the pickle files are stored in a specific directory
+        # Replace 'your_pickle_directory' with the actual directory where the pickle files are stored
+        uwb_pickle_directory = os.path.join("uwb", "Legacy-SW", "ModuleConnector", "ModuleConnector-unix-1", "python35-x86_64-linux-gnu", "pymoduleconnector", "examples", "data")
+        number_of_pickles = count_pickle_files(uwb_pickle_directory)
+
+        col7.metric("UWB data", f"{number_of_pickles}", ".pickle files saved")
         os.remove(uwb_status_path)
 
+    # Reporting where the ToF data is stored
     ToF_status_path = os.path.join("ToF", "ToF_data_saved_status.txt")
     if os.path.exists(ToF_status_path):
         with open(ToF_status_path, "r") as f:
             ToF_data_saved_status = f.read()
-            # Extract current_index using regex
-        current_index_match = re.search(r"_([0-9]+)\.pickle", ToF_data_saved_status)
-        if current_index_match:
-            current_index = int(current_index_match.group(1))
-            current_index += 1  # Add one to the current_index
-        col8.metric("ToF data", f"{current_index}", "1 .pickle saved")
-        st.success(ToF_data_saved_status)
-        logger_terminate.info(f'{ToF_data_saved_status}')
+            st.success(ToF_data_saved_status)
+            logger_terminate.info(f'{ToF_data_saved_status}')
+
+        # Assuming the pickle files are stored in a specific directory
+        # Replace 'your_pickle_directory' with the actual directory where the pickle files are stored
+        ToF_pickle_directory = os.path.join("ToF", "data")
+        number_of_pickles = count_pickle_files(ToF_pickle_directory)
+
+        col8.metric("ToF data", f"{number_of_pickles}", ".pickle files saved")
         os.remove(ToF_status_path)
 
     # # Acoustic modality status

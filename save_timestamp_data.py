@@ -66,13 +66,13 @@ def get_next_index_global_log(output_directory):
     indices = [int(os.path.splitext(os.path.basename(f))[0].split('_')[1]) for f in existing_files]
     return max(indices) + 1 if indices else 0
 
-def save_timestamp_data_polar(temp_data, index, timestamp, output_directory):
+def save_timestamp_data_polar(temp_data, file_name, timestamp, output_directory):
     data_folder = os.path.join(output_directory, "data")
     
     if not os.path.exists(data_folder):
         os.makedirs(data_folder)
 
-    file_path = os.path.join(data_folder, 'output_{}.pickle'.format(index))
+    file_path = os.path.join(data_folder, '{}.pickle'.format(file_name))
     
     # Load existing data if the file exists
     if os.path.exists(file_path):

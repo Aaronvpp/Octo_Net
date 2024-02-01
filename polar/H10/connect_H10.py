@@ -258,27 +258,11 @@ async def main():
         devices = await BleakScanner.discover()
         # Initial config.ini
         config = configparser.ConfigParser()
-        config.read(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../config.ini')))
+        config.read(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../Global_Server_config.ini')))
         polar_settings_str = config.get('device_settings', 'polar')
         polar_settings = json.loads(polar_settings_str)
-        # General setting
-        output_directory = os.path.dirname(os.path.abspath(__file__))
-        current_index_polar = get_next_index_polar(output_directory)
-        # Log 
-        logger = setup_logger(output_directory, current_index_polar)
-        config_data = {}
-        for section in config.sections():
-            if section != 'device_settings':
-                config_data[section] = dict(config.items(section))
-        # logger.info(f"Loaded configuration: {config_data}")
-        logger.info(f"Loaded Polar configuration: {polar_settings}")
-        # seekthermal_settings_str = config.get('device_settings', 'polar')
-        # config_data = {}
-        # for section in config.sections():
-        #     if section != 'device_settings':
-        #         config_data[section] = dict(config.items(section))
-        # logger.info(f"Loaded configuration: {config_data}")
-        # logger.info(f"Loaded IRA configuration: {polar_settings}")
+
+        
         record_len = int(polar_settings["record_len(in_second)"])
         for device in devices:
             timeflag = True
@@ -300,6 +284,25 @@ async def main():
                     print("waitingformqtt")
                     # st.success("Blue Tooth is connected, ready for receiving MQTT command from the server.")
                     await wait_for_command()
+                    # Modify the naming protocode
+                    participant_id = config.get('participant', 'id')
+                    trial_number = config.get('task_info', 'trial_number')
+                    activity = config.get('label_info', 'activity')
+                    starttimestamp, _ = get_ntp_time_and_difference()
+                    # Format the timestamp to exclude microseconds (down to seconds)
+                    starttimestamp = starttimestamp.strftime("%Y%m%d%H%M%S")
+                    file_name = f"{starttimestamp}_node_1_modality_heartrate_subject_{participant_id}_activity_{activity}_trial_{trial_number}"
+                    # General setting
+                    output_directory = os.path.dirname(os.path.abspath(__file__))
+                    current_index_polar = get_next_index_polar(output_directory)
+                    # Log 
+                    logger = setup_logger(output_directory, file_name)
+                    config_data = {}
+                    for section in config.sections():
+                        if section != 'device_settings':
+                            config_data[section] = dict(config.items(section))
+                    logger.info(f"Loaded Polar configuration: {polar_settings}")
+
                     for i in tqdm(range(record_len), desc='Recording...'):
                         current_local_time = datetime.now()
                         if timeflag:
@@ -323,7 +326,7 @@ async def main():
                         hr_data = polar_device.get_hr_data()
                         print("get_hr_data", hr_data)
                         logger.info("get_hr_data", hr_data)
-                        file_path =save_timestamp_data_polar(hr_data, current_index_polar, fake_ntp_timestamp, output_directory)
+                        file_path =save_timestamp_data_polar(hr_data, file_name, fake_ntp_timestamp, output_directory)
                         # To calculate the actual sampling rate
                         sampler.update_loop()
                         # Calculate the total frame
@@ -336,8 +339,8 @@ async def main():
                             pickle_size = os.path.getsize(file_path)
                             human_readable_size = convert_size(pickle_size)
                             with open(os.path.join(os.path.dirname(__file__), "polar_data_saved_status.txt"), "w") as f:
-                                f.write(f"Polar Data saved /polar/data/output_{current_index_polar}.pickle,\n")
-                                f.write(f"Polar Log saved /polar/logs/config_{current_index_polar}.log\n")
+                                f.write(f"Polar Data saved /polar/data/{file_name}.pickle,\n")
+                                f.write(f"Polar Log saved /polar/logs/{file_name}.log\n")
                                 f.write(f"Total frames processed: {frame_counter},\n")
                                 f.write(f"Pickle file size: {human_readable_size}\n")
                             if os.path.exists('polar_ready.txt'):
@@ -353,8 +356,8 @@ async def main():
                     pickle_size = os.path.getsize(file_path)
                     human_readable_size = convert_size(pickle_size)
                     with open(os.path.join(os.path.dirname(__file__), "polar_data_saved_status.txt"), "w") as f:
-                        f.write(f"Polar Data saved /polar/data/output_{current_index_polar}.pickle,\n")
-                        f.write(f"Polar Log saved /polar/logs/config_{current_index_polar}.log\n")
+                        f.write(f"Polar Data saved /polar/data/{file_name}.pickle,\n")
+                        f.write(f"Polar Log saved /polar/logs/{file_name}.log\n")
                         f.write(f"Total frames processed: {frame_counter},\n")
                         f.write(f"Pickle file size: {human_readable_size}\n")
                 finally:
@@ -364,7 +367,7 @@ async def main():
                     
                     
             else:
-                logger.error("Polar H10 device not found. ")
+                # logger.error("Polar H10 device not found. ")
                 print("Polar H10 device not found. ")
 
 

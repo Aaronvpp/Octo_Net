@@ -57,12 +57,21 @@ config.read(os.path.abspath(os.path.join(os.path.dirname(__file__), '../config.i
 mmwave_settings_str = config.get('device_settings', 'mmwave')
 mmwave_settings = json.loads(mmwave_settings_str)
 
+# Modify the naming protocode
+participant_id = config.get('participant', 'id')
+trial_number = config.get('task_info', 'trial_number')
+activity = config.get('label_info', 'activity')
+starttimestamp, _ = get_ntp_time_and_difference()
+# Format the timestamp to exclude microseconds (down to seconds)
+starttimestamp = starttimestamp.strftime("%Y%m%d%H%M%S")
+file_name = f"{starttimestamp}_node_1_modality_mmwave_subject_{participant_id}_activity_{activity}_trial_{trial_number}"
+
 # Change the configuration file name
 script_dir = os.path.dirname(os.path.realpath(__file__))
 output_directory = script_dir
 current_index = get_next_index(output_directory)
 # Log 
-logger = setup_logger(output_directory, current_index)
+logger = setup_logger(output_directory, file_name)
 config_data = {}
 for section in config.sections():
     if section != 'device_settings':
@@ -426,7 +435,7 @@ data_folder = os.path.join(output_directory, "data")
 if not os.path.exists(data_folder):
     os.makedirs(data_folder)
 
-file_path = os.path.join(data_folder, f'output_{current_index}.pickle')
+file_path = os.path.join(data_folder, f'{file_name}.pickle')
 with open(file_path, 'ab') as f:
     while True:
         try:
@@ -469,8 +478,8 @@ with open(file_path, 'ab') as f:
                 pickle_size = os.path.getsize(file_path)
                 human_readable_size = convert_size(pickle_size)
                 with open(os.path.join(os.path.dirname(__file__), "mmwave_data_saved_status.txt"), "w") as f:
-                        f.write(f"mmwave Data saved /mmWave/data/output_{current_index}.pickle,\n")
-                        f.write(f"mmwave Log saved /mmWave/logs/config_{current_index}.log\n")
+                        f.write(f"mmwave Data saved /mmWave/data/{file_name}.pickle,\n")
+                        f.write(f"mmwave Log saved /mmWave/logs/{file_name}.log\n")
                         f.write(f"Total frames processed: {frame_counter},\n")
                         f.write(f"Pickle file size: {human_readable_size}\n")
                 break

@@ -40,23 +40,32 @@ index = 0
 config = configparser.ConfigParser()
 config.read(os.path.abspath(os.path.join(os.path.dirname(__file__), '../config.ini')))
 
+# Modify the naming protocode
+participant_id = config.get('participant', 'id')
+trial_number = config.get('task_info', 'trial_number')
+activity = config.get('label_info', 'activity')
+starttimestamp, _ = get_ntp_time_and_difference()
+# Format the timestamp to exclude microseconds (down to seconds)
+starttimestamp = starttimestamp.strftime("%Y%m%d%H%M%S")
+file_name_depthcam = f"{starttimestamp}_node_1_modality_depthcam_subject_{participant_id}_activity_{activity}_trial_{trial_number}"
+file_name_rgb = f"{starttimestamp}_node_1_modality_rgbcam_subject_{participant_id}_activity_{activity}_trial_{trial_number}" 
+
 depth_settings_str = config.get('device_settings', 'depth_cam')
 depth_settings = json.loads(depth_settings_str)
+data_folder = os.path.join(output_directory, "data")
+if not os.path.exists(data_folder):
+    os.makedirs(data_folder)
+
 while True:
-    main_output_folder = f'output_{index}'
-    main_output_path = os.path.join(output_directory, main_output_folder)
-    depth_output_folder = f'depth_image_output_{index}'
-    depth_output_path = os.path.join(main_output_path, depth_output_folder)
-    rgb_output_folder = f'rgb_video_output_{index}'
-    rgb_output_path = os.path.join(main_output_path, rgb_output_folder)
+    main_output_folder = f'{file_name_depthcam}'
+    main_output_path = os.path.join(output_directory,data_folder, main_output_folder)
+    depth_output_path = main_output_path
+    rgb_output_path = main_output_path
     if not os.path.exists(main_output_path):
         os.makedirs(main_output_path)
-        os.makedirs(depth_output_path)
-        os.makedirs(rgb_output_path)
         break
-    index += 1
 
-logger = setup_logger(output_directory, index)
+logger = setup_logger(output_directory, file_name_depthcam)
 config_data = {}
 for section in config.sections():
     if section != 'device_settings':
@@ -84,10 +93,10 @@ color_fps = int(depth_cam_settings.get('color_fps', 30))
 
 # Define the codec and create VideoWriter objects
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-rgb_video_filename = os.path.join(rgb_output_path, 'rgb_video.mp4')
+rgb_video_filename = os.path.join(rgb_output_path, f'{file_name_rgb}.mp4')
 rgb_video_writer = cv2.VideoWriter(rgb_video_filename, fourcc, color_fps, (width, height))
 # Define the codec and create VideoWriter objects for depth video
-depth_video_filename = os.path.join(depth_output_path, 'depth_video.mp4')
+depth_video_filename = os.path.join(depth_output_path, f'{file_name_depthcam}.mp4')
 depth_video_writer = cv2.VideoWriter(depth_video_filename, fourcc, depth_fps, (width, height))
 
 # Configure depth and color streams
@@ -133,7 +142,7 @@ timeflag = True
 #all_depth_frames = []
 try:
  
-    file_path = os.path.join(depth_output_path, f'output_{index}.pickle')
+    # file_path = os.path.join(depth_output_path, f'output_{index}.pickle')
     #with open(file_path, 'ab') as f:
     while True:
         # Wait for a coherent pair of frames: depth and color
@@ -235,10 +244,10 @@ try:
             #pickle_size = os.path.getsize(file_path)
             #human_readable_size = convert_size(pickle_size)
             with open(os.path.join(os.path.dirname(__file__), "deptcam_data_saved_status.txt"), "w") as f:
-                    f.write(f"Deptcam Data saved /depthCamera/output_{index}/depth_image_output_{index}/depth_video.mp4,\n")
-                    f.write(f"RBG video saved /depthCamera/output_{index}/rgb_video_output_{index}/rgb_video.mp4,\n")
-                    f.write(f"Depthcam Log saved /depthCamera/logs/config_{index}.log\n")
-                    f.write(f"RGB Log saved /depthCamera/logs/config_{index}.log\n")
+                    f.write(f"Deptcam Data saved /depthCamera/data/{file_name_depthcam}.mp4,\n")
+                    f.write(f"RBG video saved /depthCamera/data/{file_name_rgb}.mp4,\n")
+                    f.write(f"Depthcam Log saved /depthCamera/logs/{file_name_depthcam}.log\n")
+                    f.write(f"RGB Log saved /depthCamera/logs/{file_name_depthcam}.log\n")
                     f.write(f"Total frames processed: {frame_counter},\n")
                     #f.write(f"DepthCam Pickle file size: {human_readable_size},\n")
                     f.write(f"DepthCam video file size: {human_readable_mp4_depth_size},\n")
@@ -327,7 +336,12 @@ try:
     depth_video_writer.release()
 finally:
     # Save the timestamp lists to separate files
-    with open(os.path.join(main_output_path, 'timestamps.txt'), 'w') as f:
+    with open(os.path.join(main_output_path, f'{file_name_depthcam}.txt'), 'w') as f:
+        for timestamp in rgb_video_timestamps:
+            f.write(f"{timestamp}\n")
+    
+    # Save the timestamp lists to separate files
+    with open(os.path.join(main_output_path, f'{file_name_rgb}.txt'), 'w') as f:
         for timestamp in rgb_video_timestamps:
             f.write(f"{timestamp}\n")
 
