@@ -2,7 +2,7 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from time_utils import *
-
+import configparser
 class IndexManager():
     '''
     Universe Indexing for saving
@@ -29,6 +29,15 @@ class IndexManager():
             self.rec_idx = self._get_rec_idx()
             import time
             ntp_time, time_difference = get_ntp_time_and_difference()
+            config = configparser.ConfigParser()
+            config.read(os.path.abspath(os.path.join(os.path.dirname(__file__), '../config.ini')))
+            # Modify the naming protocode
+            participant_id = config.get('participant', 'id')
+            trial_number = config.get('task_info', 'trial_number')
+            activity = config.get('label_info', 'activity')
+            # Format the timestamp to exclude microseconds (down to seconds)
+            starttimestamp = ntp_time.strftime("%Y%m%d%H%M%S")
+            file_name = f"{starttimestamp}_node_1_modality_acoustic_subject_{participant_id}_activity_{activity}_trial_{trial_number}"
             name_kwargs = {
                 "task": global_arg.task,
                 "wave": play_arg.wave,
@@ -37,7 +46,7 @@ class IndexManager():
                 "time": ntp_time,
                 "rec_idx": self.rec_idx
             }
-            self.name = self._construct_save_name(**name_kwargs)
+            self.name = file_name
         else:
             self.rec_idx = global_arg.rec_idx
             self.name = self._find_rec_name()

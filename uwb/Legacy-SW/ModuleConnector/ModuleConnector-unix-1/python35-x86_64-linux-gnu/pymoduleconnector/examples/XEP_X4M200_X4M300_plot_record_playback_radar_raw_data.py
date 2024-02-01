@@ -372,7 +372,7 @@ def simple_xep_plot(device_name, record=False, baseband=False):
     if not os.path.exists(data_folder):
         os.makedirs(data_folder)
         
-    file_path = os.path.join(data_folder, 'output_{}.pickle'.format(experiment_idx))
+    
     
     config = configparser.ConfigParser()
     config.read(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../../../../../config.ini')))
@@ -386,6 +386,7 @@ def simple_xep_plot(device_name, record=False, baseband=False):
     starttimestamp = starttimestamp.strftime("%Y%m%d%H%M%S")
     file_name = "{}_node_1_modality_uwb_subject_{}_activity_{}_trial_{}".format(starttimestamp, participant_id, activity, trial_number)
     
+    file_path = os.path.join(data_folder, '{}.pickle'.format(file_name))
     logger = setup_logger(output_directory, file_name)
     uwb_settings_str = config.get('device_settings', 'uwb')
     uwb_settings = json.loads(uwb_settings_str)
