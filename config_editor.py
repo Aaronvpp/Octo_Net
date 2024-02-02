@@ -883,7 +883,7 @@ if st.button("Terminate All") or st.session_state.terminate_flag == True:
         with open(acoustic_status_path, "r") as f:
             acoustic_data_saved_status = f.read()
             # Extract current_index using regex
-        acoustic_audio_dir = os.path.join("acoustic", "audio", "data")
+        acoustic_audio_dir = os.path.join("acoustic", "data")
         directories = [d for d in os.listdir(acoustic_audio_dir) if os.path.isdir(os.path.join(acoustic_audio_dir, d)) and "node" in d]
         directory_count = len(directories)
         current_index_match = re.search(r"_([0-9]+)\.wav", acoustic_data_saved_status)
