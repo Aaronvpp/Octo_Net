@@ -177,22 +177,26 @@ def update_modality_status(status_placeholder):
     status_placeholder.markdown(status_text, unsafe_allow_html=True)
 
 def find_latest_log_file(log_dir):
-    log_files = glob.glob(os.path.join(log_dir, "config_*.log"))
-    max_index = -1
+    # Pattern to match 'config_*.log' files
+    log_files = glob.glob(os.path.join(log_dir, "*.log"))
+    latest_time = None
     latest_log_file = None
 
     for log_file in log_files:
-        match = re.search(r"config_(\d+).log", log_file)
-        if match:
-            index = int(match.group(1))
-            if index > max_index:
-                max_index = index
-                latest_log_file = log_file
+        # Extract the timestamp from the filename
+        file_time = os.path.getmtime(log_file)
+        if latest_time is None or file_time > latest_time:
+            latest_time = file_time
+            latest_log_file = log_file
 
-    if latest_log_file is None:
-        print("No log files found in the directory:", log_dir)
-
-    return latest_log_file
+    if latest_log_file:
+        # Extract the base filename without the '.log' extension
+        latest_log_basename = os.path.basename(latest_log_file)
+        name_without_extension = os.path.splitext(latest_log_basename)[0]
+    
+    
+    st.write(name_without_extension)
+    return name_without_extension
 
 def get_process_status(pid):
     try:
@@ -610,10 +614,20 @@ if st.button("Save and Run") or st.session_state.start_flag == True:
     # Save the global config and log
     config = configparser.ConfigParser()
     config.read(os.path.abspath(os.path.join(os.path.dirname(__file__), 'config.ini')))
+
+    # Modify the naming protocode
+    participant_id = config.get('participant', 'id')
+    trial_number = config.get('task_info', 'trial_number')
+    activity = config.get('label_info', 'activity')
+    starttimestamp, _ = get_ntp_time_and_difference()
+    # Format the timestamp to exclude microseconds (down to seconds)
+    starttimestamp = starttimestamp.strftime("%Y%m%d%H%M%S")
+    file_name = f"{starttimestamp}_node_1_modality_all_subject_{participant_id}_activity_{activity}_trial_{trial_number}"
+
     output_directory = os.path.dirname(os.path.abspath(__file__))
-    current_index = get_next_index_global_log(output_directory)
-    print(current_index, "currentindex")
-    logger = setup_logger_global(output_directory, current_index)
+    # current_index = get_next_index_global_log(output_directory)
+    # print(current_index, "currentindex")
+    logger = setup_logger_global(output_directory, file_name)
     config_data = {}
     for section in config.sections():
         config_data[section] = dict(config.items(section))
@@ -761,13 +775,13 @@ if st.button("Terminate All") or st.session_state.terminate_flag == True:
     global_log_file_path = find_latest_log_file(os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs"))
     # Restart the log file to insert the termination flag
     output_directory = os.path.dirname(os.path.abspath(__file__))
-    current_index = get_next_index_global_log(output_directory)
-    log_index = int(current_index) - 1 
-    logger_terminate = setup_logger_global_terminate(output_directory, log_index)
+    # current_index = get_next_index_global_log(output_directory)
+    # log_index = int(current_index) - 1 
+    logger_terminate = setup_logger_global_terminate(output_directory, global_log_file_path)
     logger_terminate.debug("Logger initialized in Save and Run block")
     logger_terminate.info("Termination flag set")
     if global_log_file_path:
-        experiment_duration = get_experiment_duration(global_log_file_path)
+        experiment_duration = get_experiment_duration(os.path.join(output_directory,"logs", global_log_file_path + ".log"))
         if experiment_duration:
             st.write(f"Experiment duration: {experiment_duration}")
             logger_terminate.info(f"Experiment duration: {experiment_duration}")

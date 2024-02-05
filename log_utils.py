@@ -24,7 +24,9 @@ def setup_logger(output_directory, file_name):
         os.makedirs(log_directory)
 
     log_filename = os.path.join(log_directory, '{}.log'.format(file_name))  # Changed to use format
-
+    # Check if the logger already exists, if so return the existing logger
+    if log_filename in logging.root.manager.loggerDict:
+        return logging.getLogger(log_filename)
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
 
@@ -36,15 +38,15 @@ def setup_logger(output_directory, file_name):
     return logger
 
 # Setting up the logger
-def setup_logger_global(output_directory, index):
+def setup_logger_global(output_directory, file_name):
     log_directory = os.path.join(output_directory, 'logs')
     if not os.path.exists(log_directory):
         os.makedirs(log_directory)
 
-    log_filename = os.path.join(log_directory, 'config_{}.log'.format(index))
+    log_filename = os.path.join(log_directory, '{}.log'.format(file_name))
 
     # Create a unique logger name using the index
-    logger_name = "global_logger_{}".format(index)
+    logger_name = "global_logger_{}".format(file_name)
     
     # Check if the logger already exists, if so return the existing logger
     if logger_name in logging.root.manager.loggerDict:
@@ -66,7 +68,7 @@ def setup_logger_global_terminate(output_directory, index):
     if not os.path.exists(log_directory):
         os.makedirs(log_directory)
 
-    log_filename = os.path.join(log_directory, 'config_{}.log'.format(index))
+    log_filename = os.path.join(log_directory, '{}.log'.format(index))
 
     # Create a unique logger name using the index
     logger_name = "global_logger_{}".format(index)
