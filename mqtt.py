@@ -91,7 +91,6 @@ config.set("participant", "weight", str(participant_weight))
 
 # Display and edit the [experiment] section
 st.sidebar.subheader("Experiment")
-experiment_id = st.sidebar.text_input("ID", config.get("experiment", "id"))
 experiment_date = st.sidebar.date_input("Date", value=datetime.strptime(config.get("experiment", "date"), "%Y-%m-%d"))
 experiment_time = st.sidebar.time_input("Time", value=datetime.strptime(config.get("experiment", "time"), "%H:%M:%S").time())
 experiment_condition = st.sidebar.text_input("Condition", config.get("experiment", "condition"))
@@ -99,7 +98,6 @@ experiment_group = st.sidebar.text_input("Group", config.get("experiment", "grou
 experiment_illumination_level = st.sidebar.text_input("Illumination Level", config.get("experiment", "illumination_level"))
 
 # Update the [experiment] section with the new values
-config.set("experiment", "id", str(experiment_id))
 config.set("experiment", "date", str(experiment_date))
 config.set("experiment", "time", str(experiment_time))
 config.set("experiment", "condition", experiment_condition)
@@ -422,7 +420,7 @@ if st.button("Mode 2: Overwrite nodes' configs and Run"):
         # Format the timestamp to exclude microseconds (down to seconds)
         starttimestamp = starttimestamp.strftime("%Y%m%d%H%M%S")
         file_name = f"{starttimestamp}_node_1_modality_wifi_subject_{participant_id}_activity_{activity}_trial_{trial_number}"
-        experiment_id = config.get("experiment", "id")
+        
         # for _ in RPI_IPS:
         st.write(send_http_request("192.168.1.102",f"experiment/start?exp_name={file_name}"))
 

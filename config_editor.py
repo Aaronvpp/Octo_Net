@@ -245,7 +245,6 @@ config.set("participant", "weight", str(participant_weight))
 
 # Display and edit the [experiment] section
 st.sidebar.subheader("Experiment")
-experiment_id = st.sidebar.text_input("ID", config.get("experiment", "id"))
 experiment_date = st.sidebar.date_input("Date", value=datetime.strptime(config.get("experiment", "date"), "%Y-%m-%d"))
 experiment_time = st.sidebar.time_input("Time", value=datetime.strptime(config.get("experiment", "time"), "%H:%M:%S").time())
 experiment_condition = st.sidebar.text_input("Condition", config.get("experiment", "condition"))

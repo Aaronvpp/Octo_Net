@@ -34,5 +34,5 @@ DeptCam/convert_back_to_depth.py
 seekcamera-python/runseek/convert_back_to_thermal.py
 config.ini
 Global_Server_config.ini
-
+wifi
 polar.py
