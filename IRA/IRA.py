@@ -430,7 +430,7 @@ def main():
                 
                     print(Detected_temperature.shape)
                 ira_interpolated = SubpageInterpolating(Detected_temperature)
-                ira_norm = ((ira_interpolated - np.min(ira_interpolated))/ (37 - np.min(ira_interpolated))) * 255
+                ira_norm = ((ira_interpolated - np.min(ira_interpolated))/ (np.max(ira_interpolated) - np.min(ira_interpolated))) * 255
                 ira_expand = np.repeat(ira_norm, 20, 0)
                 ira_expand = np.repeat(ira_expand, 20, 1)
                 ira_img_colored = cv2.applyColorMap((ira_expand).astype(np.uint8), cv2.COLORMAP_JET)

@@ -363,7 +363,7 @@ def clear_buffer(mc):
 def simple_xep_plot(device_name, record=False, baseband=False):
     FPS = 10
     directory = '.'
-    reset(device_name)
+    # reset(device_name)
     mc = pymoduleconnector.ModuleConnector(device_name)
     output_directory = os.path.dirname(os.path.abspath(__file__))
     # pickle_idx = 0

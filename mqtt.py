@@ -23,7 +23,7 @@ def on_connect(client, userdata, flags, rc):
 # Initialize the MQTT client 
 client = mqtt.Client() 
 client.on_connect = on_connect 
-client.connect("10.68.45.180", 1883, 120) 
+client.connect("10.68.36.17", 1883, 120) 
 # Streamlit HTML content 
 highlighted_text = ''' 
 <div style="background-color: #f0e68c; padding: 10px; border-radius: 5px;"> 
@@ -34,7 +34,7 @@ highlighted_text = '''
 st.markdown(highlighted_text, unsafe_allow_html=True) 
  
 # Defining the clickable link in HTML format 
-link_html = '<a href="http://10.68.45.180:8502">Enter the Node 1</a>' 
+link_html = '<a href="http://10.68.36.17:8502">Enter the Node 1</a>' 
  
 # Embedding the clickable link inside the highlighted_server HTML content 
 highlighted_server = f''' 
@@ -422,11 +422,13 @@ if st.button("Mode 2: Overwrite nodes' configs and Run"):
         file_name = f"{starttimestamp}_node_1_modality_wifi_subject_{participant_id}_activity_{activity}_trial_{trial_number}"
         
         # for _ in RPI_IPS:
+        st.write(send_http_request("192.168.1.102",f"ping/start"))
         st.write(send_http_request("192.168.1.102",f"experiment/start?exp_name={file_name}"))
 
 if st.button("Mode 2: Terminate "):
     client.publish("command/terminate", "terminate_command_payload", qos=2)
     if start_wifi:
         st.write(send_http_request("192.168.1.102","experiment/stop"))
+        st.write(send_http_request("192.168.1.102",f"ping/stop"))
 
 client.loop_start()  

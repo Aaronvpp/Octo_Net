@@ -701,8 +701,8 @@ if st.button("Save and Run") or st.session_state.start_flag == True:
         script_path = '/home/aiot-mini/code/uwb/Legacy-SW/ModuleConnector/ModuleConnector-unix-1/python35-x86_64-linux-gnu/pymoduleconnector/examples/XEP_X4M200_X4M300_plot_record_playback_radar_raw_data.py'  # Path to your Python 3.5 script
         script_args = ['-d', '/dev/ttyACM2']  # Arguments for the script
 
-        # Combine the Python interpreter path, script path, and script arguments
-        full_command = ["sudo", python35_path, script_path] + script_args
+        # Prepend 'xvfb-run' to the command
+        full_command = ["sudo", "xvfb-run", python35_path, script_path] + script_args
         print(full_command)
         # Call the Python script with arguments
         process_uwb = subprocess.Popen(full_command)
