@@ -251,6 +251,7 @@ class AudioRecorder(Audio):
             callback=self._callback,
             # finished_callback=self.event.set,
         )
+        self.file = sf.SoundFile(self.path + ".wav", mode="w", samplerate=self._sampling_rate, channels=1)
         print(self.__dict__)
         
     def begin(self):
@@ -276,6 +277,7 @@ class AudioRecorder(Audio):
             logger.info("End")
             self.stream.stop()
             self.stream.close()
+            self.file.close()
     
     def end(self):
         self._thread = False
@@ -289,14 +291,14 @@ class AudioRecorder(Audio):
         if not self._thread:
             raise sd.CallbackStop
 
-        self.datarec = np.append(self.datarec, indata.copy())
+        self.file.write(indata[:])
 
     def get_record(self):
         return self.datarec
 
     def save_record(self):
         # print(">" * 50 + "Saving..." + "<" * 50)
-        sf.write(self.path + ".wav", self.datarec, self._sampling_rate)  # PCM
+        # sf.write(self.path + ".wav", self.datarec, self._sampling_rate)  # PCM
         file_size = os.path.getsize(self.path + ".wav")
         human_readable_size = convert_size(file_size)
         if file_size is not None:
@@ -304,7 +306,7 @@ class AudioRecorder(Audio):
                 f.write(f"File can be found at{self.path}. \n")
                 f.write(f"File size of {self.path}.wav is: {human_readable_size} \n")
                 logger.info(f"File size written to {f}")
-        savemat(self.path + ".mat", {"data_rec": self.datarec}) # MAT
+        # savemat(self.path + ".mat", {"data_rec": self.datarec}) # MAT
         logger.info("Saved at {}".format(self.path))
 
 
