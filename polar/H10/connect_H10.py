@@ -225,7 +225,7 @@ async def wait_for_command():
     client = mqtt.Client()
     client.on_connect = on_connect
     client.on_message = on_message
-    client.connect("10.68.36.17", 1883, 120)
+    client.connect("192.168.31.35", 1883, 120)
     client.loop_start()
 
     while not received_command:

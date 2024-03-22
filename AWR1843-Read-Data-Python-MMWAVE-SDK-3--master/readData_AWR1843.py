@@ -157,18 +157,18 @@ def parseConfigFile(configFileName):
             numAdcSamplesRoundTo2 = 1;
             
             while numAdcSamples > numAdcSamplesRoundTo2:
-                numAdcSamplesRoundTo2 = numAdcSamplesRoundTo2 * 2;
+                numAdcSamplesRoundTo2 = numAdcSamplesRoundTo2 * 2
                 
-            digOutSampleRate = int(splitWords[11]);
+            digOutSampleRate = int(splitWords[11])
             
         # Get the information about the frame configuration    
         elif "frameCfg" in splitWords[0]:
             
-            chirpStartIdx = int(splitWords[1]);
-            chirpEndIdx = int(splitWords[2]);
-            numLoops = int(splitWords[3]);
-            numFrames = int(splitWords[4]);
-            framePeriodicity = float(splitWords[5]);
+            chirpStartIdx = int(splitWords[1])
+            chirpEndIdx = int(splitWords[2])
+            numLoops = int(splitWords[3])
+            numFrames = int(splitWords[4])
+            framePeriodicity = float(splitWords[5])
 
             
     # Combine the read data to obtain the configuration parameters           
@@ -190,13 +190,13 @@ def readAndParseData18xx(Dataport, configParameters):
     global byteBuffer, byteBufferLength
     
     # Constants
-    OBJ_STRUCT_SIZE_BYTES = 12;
-    BYTE_VEC_ACC_MAX_SIZE = 2**15;
-    MMWDEMO_UART_MSG_DETECTED_POINTS = 1;
-    MMWDEMO_UART_MSG_RANGE_PROFILE   = 2;
-    maxBufferSize = 2**15;
-    tlvHeaderLengthInBytes = 8;
-    pointLengthInBytes = 16;
+    OBJ_STRUCT_SIZE_BYTES = 12
+    BYTE_VEC_ACC_MAX_SIZE = 2**15
+    MMWDEMO_UART_MSG_DETECTED_POINTS = 1
+    MMWDEMO_UART_MSG_RANGE_PROFILE   = 2
+    maxBufferSize = 2**15
+    tlvHeaderLengthInBytes = 8
+    pointLengthInBytes = 16
     magicWord = [2, 1, 4, 3, 6, 5, 8, 7]
     
     # Initialize variables

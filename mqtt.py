@@ -23,7 +23,7 @@ def on_connect(client, userdata, flags, rc):
 # Initialize the MQTT client 
 client = mqtt.Client() 
 client.on_connect = on_connect 
-client.connect("10.68.36.17", 1883, 120) 
+client.connect("192.168.31.35", 1883, 120) 
 # Streamlit HTML content 
 highlighted_text = ''' 
 <div style="background-color: #f0e68c; padding: 10px; border-radius: 5px;"> 
@@ -34,7 +34,7 @@ highlighted_text = '''
 st.markdown(highlighted_text, unsafe_allow_html=True) 
  
 # Defining the clickable link in HTML format 
-link_html = '<a href="http://10.68.36.17:8502">Enter the Node 1</a>' 
+link_html = '<a href="http://192.168.31.35:8502">Enter the Node 1</a>' 
  
 # Embedding the clickable link inside the highlighted_server HTML content 
 highlighted_server = f''' 
@@ -419,16 +419,30 @@ if st.button("Mode 2: Overwrite nodes' configs and Run"):
         starttimestamp, _ = get_ntp_time_and_difference()
         # Format the timestamp to exclude microseconds (down to seconds)
         starttimestamp = starttimestamp.strftime("%Y%m%d%H%M%S")
-        file_name = f"{starttimestamp}_node_1_modality_wifi_subject_{participant_id}_activity_{activity}_trial_{trial_number}"
-        
+        file_name_1 = f"{starttimestamp}_node_1_modality_wifi_subject_{participant_id}_activity_{activity}_trial_{trial_number}"
+        file_name_2 = f"{starttimestamp}_node_2_modality_wifi_subject_{participant_id}_activity_{activity}_trial_{trial_number}"
+        file_name_3 = f"{starttimestamp}_node_3_modality_wifi_subject_{participant_id}_activity_{activity}_trial_{trial_number}"
+        file_name_4 = f"{starttimestamp}_node_4_modality_wifi_subject_{participant_id}_activity_{activity}_trial_{trial_number}"
         # for _ in RPI_IPS:
+        st.write(send_http_request("192.168.1.101",f"ping/start"))
+        st.write(send_http_request("192.168.1.101",f"experiment/start?exp_name={file_name_1}"))
         st.write(send_http_request("192.168.1.102",f"ping/start"))
-        st.write(send_http_request("192.168.1.102",f"experiment/start?exp_name={file_name}"))
+        st.write(send_http_request("192.168.1.102",f"experiment/start?exp_name={file_name_2}"))
+        st.write(send_http_request("192.168.1.103",f"ping/start"))
+        st.write(send_http_request("192.168.1.103",f"experiment/start?exp_name={file_name_3}"))
+        st.write(send_http_request("192.168.1.104",f"ping/start"))
+        st.write(send_http_request("192.168.1.104",f"experiment/start?exp_name={file_name_4}"))
 
 if st.button("Mode 2: Terminate "):
     client.publish("command/terminate", "terminate_command_payload", qos=2)
     if start_wifi:
+        st.write(send_http_request("192.168.1.101","experiment/stop"))
+        st.write(send_http_request("192.168.1.101",f"ping/stop"))
         st.write(send_http_request("192.168.1.102","experiment/stop"))
         st.write(send_http_request("192.168.1.102",f"ping/stop"))
+        st.write(send_http_request("192.168.1.103","experiment/stop"))
+        st.write(send_http_request("192.168.1.103",f"ping/stop"))
+        st.write(send_http_request("192.168.1.104","experiment/stop"))
+        st.write(send_http_request("192.168.1.104",f"ping/stop"))
 
 client.loop_start()  

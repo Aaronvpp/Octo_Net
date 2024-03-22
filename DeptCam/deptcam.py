@@ -12,6 +12,7 @@ from sampling_rate import SamplingRateCalculator
 import configparser
 import json
 import math
+from motion_detect import detect_motion, convert_to_real_timestamps
 
 # To see the size of the saved pickle
 def convert_size(size_bytes):
@@ -344,6 +345,22 @@ finally:
     with open(os.path.join(main_output_path, f'{file_name_rgb}.txt'), 'w') as f:
         for timestamp in rgb_video_timestamps:
             f.write(f"{timestamp}\n")
+
+    # After saving the timestamp, perform motion detection and timestamp conversion
+    # Check if 'node_1' is in the RGB video filename
+    if 'node_1' in rgb_video_filename:
+        # For RGB video motion detection
+        output_json_path = detect_motion(rgb_video_filename)  # Function call to detect motion
+        # Assuming the paths are set up correctly above
+        activities_path = '/home/aiot-mini/code/DeptCam/data/activity.txt'  # Update this path
+
+        # Assuming the timestamp path for the RGB video is as created above
+        real_timestamps_path = convert_to_real_timestamps(output_json_path, os.path.join(main_output_path, f'{file_name_rgb}.txt'), activities_path)  # Convert timestamps
+
+        # Optionally, log or print the path to the JSON with real timestamps
+        print(f"Real timestamps JSON saved at: {real_timestamps_path}")
+    else:
+        print("The RGB video filename does not include 'node_1', skipping motion detection and timestamp conversion.")
 
     # with open(os.path.join(depth_output_path, 'depth_image_timestamps.txt'), 'w') as f:
     #     for timestamp in depth_image_timestamps:
