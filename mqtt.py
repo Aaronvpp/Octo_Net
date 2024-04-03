@@ -8,6 +8,7 @@ from datetime import datetime
 import os
 from time_utils import *
 import requests
+import socket
 
 def load_config(file_path):
     config = configparser.ConfigParser()
@@ -394,6 +395,7 @@ def send_http_request(rpi_ip, url):
         st.error(f"An error occurred: {e}")
 
 start_wifi = st.checkbox("Start WIFI modality")
+start_vayyar = st.checkbox("Start Vayyar mmwave modality")
 if st.button("Mode 2: Overwrite nodes' configs and Run"):
     save_config(config, ini_file_path)
     # Serialize the updated config data into a JSON string
@@ -411,38 +413,57 @@ if st.button("Mode 2: Overwrite nodes' configs and Run"):
     # /size: size of collected data
     # HTTP GET request to start the device
     # Retrieve the experiment ID from the config and start the experiment
+    # Modify the naming protocode
+    participant_id = config.get('participant', 'id')
+    trial_number = config.get('task_info', 'trial_number')
+    activity = config.get('label_info', 'activity')
+    starttimestamp, _ = get_ntp_time_and_difference()
+    # Format the timestamp to exclude microseconds (down to seconds)
+    starttimestamp = starttimestamp.strftime("%Y%m%d%H%M%S")
     if start_wifi:
-        # Modify the naming protocode
-        participant_id = config.get('participant', 'id')
-        trial_number = config.get('task_info', 'trial_number')
-        activity = config.get('label_info', 'activity')
-        starttimestamp, _ = get_ntp_time_and_difference()
-        # Format the timestamp to exclude microseconds (down to seconds)
-        starttimestamp = starttimestamp.strftime("%Y%m%d%H%M%S")
+        
         file_name_1 = f"{starttimestamp}_node_1_modality_wifi_subject_{participant_id}_activity_{activity}_trial_{trial_number}"
         file_name_2 = f"{starttimestamp}_node_2_modality_wifi_subject_{participant_id}_activity_{activity}_trial_{trial_number}"
         file_name_3 = f"{starttimestamp}_node_3_modality_wifi_subject_{participant_id}_activity_{activity}_trial_{trial_number}"
         file_name_4 = f"{starttimestamp}_node_4_modality_wifi_subject_{participant_id}_activity_{activity}_trial_{trial_number}"
         # for _ in RPI_IPS:
-        st.write(send_http_request("192.168.1.101",f"ping/start"))
-        st.write(send_http_request("192.168.1.101",f"experiment/start?exp_name={file_name_1}"))
-        st.write(send_http_request("192.168.1.102",f"ping/start"))
-        st.write(send_http_request("192.168.1.102",f"experiment/start?exp_name={file_name_2}"))
-        st.write(send_http_request("192.168.1.103",f"ping/start"))
-        st.write(send_http_request("192.168.1.103",f"experiment/start?exp_name={file_name_3}"))
-        st.write(send_http_request("192.168.1.104",f"ping/start"))
-        st.write(send_http_request("192.168.1.104",f"experiment/start?exp_name={file_name_4}"))
-
+        st.write(send_http_request("192.168.31.101",f"ping/start"))
+        st.write(send_http_request("192.168.31.101",f"experiment/start?exp_name={file_name_1}"))
+        st.write(send_http_request("192.168.31.102",f"ping/start"))
+        st.write(send_http_request("192.168.31.102",f"experiment/start?exp_name={file_name_2}"))
+        st.write(send_http_request("192.168.31.103",f"ping/start"))
+        st.write(send_http_request("192.168.31.103",f"experiment/start?exp_name={file_name_3}"))
+        st.write(send_http_request("192.168.31.104",f"ping/start"))
+        st.write(send_http_request("192.168.31.104",f"experiment/start?exp_name={file_name_4}"))
+    # Provide file name to vayyar radar
+    if start_vayyar:
+        server_ip = '192.168.31.64' 
+        server_port = 30000
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((server_ip, server_port))
+        vayyar_filename = f"{starttimestamp}_node_1_modality_vayyarmmwave_subject_{participant_id}_activity_{activity}_trial_{trial_number}.mat"
+        s.sendall(vayyar_filename.encode('utf-8'))
+        s.close()
+        st.success("Vayyar starts recording")
+    
 if st.button("Mode 2: Terminate "):
     client.publish("command/terminate", "terminate_command_payload", qos=2)
     if start_wifi:
-        st.write(send_http_request("192.168.1.101","experiment/stop"))
-        st.write(send_http_request("192.168.1.101",f"ping/stop"))
-        st.write(send_http_request("192.168.1.102","experiment/stop"))
-        st.write(send_http_request("192.168.1.102",f"ping/stop"))
-        st.write(send_http_request("192.168.1.103","experiment/stop"))
-        st.write(send_http_request("192.168.1.103",f"ping/stop"))
-        st.write(send_http_request("192.168.1.104","experiment/stop"))
-        st.write(send_http_request("192.168.1.104",f"ping/stop"))
+        st.write(send_http_request("192.168.31.101","experiment/stop"))
+        st.write(send_http_request("192.168.31.101",f"ping/stop"))
+        st.write(send_http_request("192.168.31.102","experiment/stop"))
+        st.write(send_http_request("192.168.31.102",f"ping/stop"))
+        st.write(send_http_request("192.168.31.103","experiment/stop"))
+        st.write(send_http_request("192.168.31.103",f"ping/stop"))
+        st.write(send_http_request("192.168.31.104","experiment/stop"))
+        st.write(send_http_request("192.168.31.104",f"ping/stop"))
+    if start_vayyar:
+        server_ip = '192.168.31.64' 
+        server_port = 30001
+        s1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s1.connect((server_ip, server_port))
+        s1.sendall(b'STOP')
+        s1.close()
+        st.success("Vayyar ends")
 
 client.loop_start()  

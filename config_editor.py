@@ -481,7 +481,7 @@ with col6:
     # set_save = st.checkbox("Set Save", value=config.getboolean("global_arg", "set_save"))
 
     # Device Arguments
-    input_device = st.selectbox("Input Device", options=["micArray RAW SPK"], index=0) # Modify as needed for actual device options
+    input_device = st.selectbox("Input Device", options=["micArray RAW SPK","UMIK-2"], index=0) # Modify as needed for actual device options
     output_device = st.selectbox("Output Device", options=["micArray RAW SPK"], index=0) # Modify as needed for actual device options
 
     config.set("play_arg", "sampling_rate", str(sampling_rate))

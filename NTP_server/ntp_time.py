@@ -11,11 +11,11 @@ def start_ntp_time_server(host, port):
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind((host, port))
     server_socket.listen(1)
-    print(f"[*] NTP Time Server started on {host}:{port}")
+    # print(f"[*] NTP Time Server started on {host}:{port}")
 
     while True:
         client_socket, client_address = server_socket.accept()
-        print(f"[*] Connection from {client_address}")
+        # print(f"[*] Connection from {client_address}")
 
         ntp_time = get_ntp_time()
         ntp_time_str = ntp_time.strftime('%Y-%m-%d %H:%M:%S.%f') + '\n'
