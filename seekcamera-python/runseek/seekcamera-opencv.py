@@ -252,7 +252,7 @@ def main():
                 mp4_size = os.path.getsize(thermal_video_filename)
                 human_readable_mp4_size = convert_size(mp4_size)
                 logger.info("End recording by a terminate action.")
-                with open(os.path.join(data_folder, f'timestamps_{file_name}.txt'), 'w') as f:
+                with open(os.path.join(data_folder, f'{file_name}.txt'), 'w') as f:
                     for timestamp in seekthermal_video_timestamps:
                         f.write(f"{timestamp}\n")
                 #pickle_size = os.path.getsize(file_path)

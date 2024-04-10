@@ -25,7 +25,8 @@ def on_message(client, userdata, msg):
         # Deserialize the received JSON string into a dictionary
         config_data = json.loads(msg.payload)
         # Define the section and key you want to protect from being overwritten
-        protected_key = "input_device"
+        protected_input_device = "input_device"
+        protected_output_device = "output_device"
         # Update the local config with the received data
         local_config = configparser.ConfigParser()
         local_config.read('config.ini')  # Load existing config
@@ -33,7 +34,7 @@ def on_message(client, userdata, msg):
             if not local_config.has_section(section):
                 local_config.add_section(section)
             for key, value in values.items():
-                if key != "polar" or (key != protected_key):
+                if key != "polar" or (key != protected_input_device) or (key != protected_output_device):
                     local_config.set(section, key, value)
                     print("section:",section, "key:",key, "values:", values)
                 

@@ -158,6 +158,15 @@ def get_experiment_duration(log_file_path):
 
 def update_modality_status(status_placeholder):
     ordered_process_names = ["IRA", "Depth Camera", "MMWave", "SeekThermal", "Polar", "Acoustic Recorder", "Acoustic Player", "uwb", "ToF"]
+    sampling_rate_thresholds = {
+        "IRA": 9,  
+        "Depth Camera": 34,
+        "MMWave": 10,
+        "SeekThermal": 10,
+        "Polar": 2,
+        "uwb": 15,
+        "ToF": 10,
+    }
     try:
         with open(os.path.abspath(os.path.join(os.path.dirname(__file__), "status.json")), "r") as f:
             status_dict = json.load(f)
@@ -171,7 +180,14 @@ def update_modality_status(status_placeholder):
             status = process_info["status"]
             color = "green" if status.lower() in ['running', 'sleeping'] else "red"
             status_indicator = f'<span style="color:{color};">⬤</span>'
-            sampling_rate_info = f'Actual Sampling rate: {round(process_info["sampling_rate"], 2)}' if "sampling_rate" in process_info else ""
+            sampling_rate_info = ""
+            if "sampling_rate" in process_info:
+                actual_sampling_rate = round(process_info["sampling_rate"], 2)
+                sampling_rate_info = f'Actual Sampling rate: {round(process_info["sampling_rate"], 2)}' if "sampling_rate" in process_info else ""
+                # Check if sampling rate exceeds threshold and display a warning if it does
+                if process_name in sampling_rate_thresholds and actual_sampling_rate > sampling_rate_thresholds[process_name]:
+                    st.write(f"Warning: {process_name} sampling rate is wrong. Expected maximum: {sampling_rate_thresholds[process_name]}, Actual: {actual_sampling_rate}")
+            
             status_text += f"{status_indicator} {process_name}: {sampling_rate_info} ({'Running' if color == 'green' else 'Not Running'})<br>"
     
     status_placeholder.markdown(status_text, unsafe_allow_html=True)
@@ -482,7 +498,7 @@ with col6:
 
     # Device Arguments
     input_device = st.selectbox("Input Device", options=["micArray RAW SPK","UMIK-2"], index=0) # Modify as needed for actual device options
-    output_device = st.selectbox("Output Device", options=["micArray RAW SPK"], index=0) # Modify as needed for actual device options
+    output_device = st.selectbox("Output Device", options=["micArray RAW SPK", "None"], index=0) # Modify as needed for actual device options
 
     config.set("play_arg", "sampling_rate", str(sampling_rate))
     config.set("play_arg", "amplitude", str(amplitude))

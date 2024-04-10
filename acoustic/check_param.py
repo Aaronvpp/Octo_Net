@@ -16,12 +16,18 @@ def check_channels(play_arg, device_arg):
 
 
 def set_and_check_device(play_arg, device_arg):
-    sd.default.device = device_arg.input_device, device_arg.output_device
+    if device_arg.output_device == "None":
+        sd.default.device = device_arg.input_device, None
+    else:
+        sd.default.device = device_arg.input_device, device_arg.output_device
     sd.default.samplerate = play_arg.sampling_rate
-    sd.default.channels = device_arg.input_channels, device_arg.output_channels
+    if device_arg.output_device == "None":
+        sd.default.channels = device_arg.input_channels, 0
+    else:
+        sd.default.channels = device_arg.input_channels, device_arg.output_channels
     print(sd.default)
-    assert (sd.check_input_settings() == None)
-    assert (sd.check_output_settings() == None)
+    # assert (sd.check_input_settings() == None)
+    # assert (sd.check_output_settings() == None)
 
 
 def check_record_and_save(global_arg):
