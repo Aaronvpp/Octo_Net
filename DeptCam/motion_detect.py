@@ -101,7 +101,7 @@ def convert_to_real_timestamps(json_path, timestamp_path, activities_path):
     Returns:
     - A JSON file path where the converted timestamps and activities are saved.
     """
-    activities = load_activities(activities_path)
+    # activities = load_activities(activities_path)
     with open(timestamp_path, 'r') as f:
         first_timestamp_str = f.readline().strip()
     first_timestamp_dt = datetime.strptime(first_timestamp_str, '%Y-%m-%d %H:%M:%S.%f')
@@ -112,31 +112,31 @@ def convert_to_real_timestamps(json_path, timestamp_path, activities_path):
     # Ensure there is an activity for each movement; fill with 'error' if not
     # while len(activities) < len(movements):
     #     activities.append('error')
-    if len(activities) == len(movements):
-        converted_movements = []
-        for i, movement in enumerate(movements):
-            start_seconds, end_seconds = movement
-            start_datetime = first_timestamp_dt + timedelta(seconds=start_seconds)
-            end_datetime = first_timestamp_dt + timedelta(seconds=end_seconds)
-            activity = activities[i] if i < len(activities) else 'error'
+    # if len(activities) == len(movements):
+    converted_movements = []
+    for i, movement in enumerate(movements):
+        start_seconds, end_seconds = movement
+        start_datetime = first_timestamp_dt + timedelta(seconds=start_seconds)
+        end_datetime = first_timestamp_dt + timedelta(seconds=end_seconds)
+        # activity = activities[i] if i < len(activities) else 'error'
+        
+        converted_movements.append({
+            "start": start_datetime.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
+            "end": end_datetime.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
+            # "activity": activity
+        })
+    # else:
+    #     converted_movements = []
+    #     for i, movement in enumerate(movements):
+    #         start_seconds, end_seconds = movement
+    #         start_datetime = first_timestamp_dt + timedelta(seconds=start_seconds)
+    #         end_datetime = first_timestamp_dt + timedelta(seconds=end_seconds)
             
-            converted_movements.append({
-                "start": start_datetime.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
-                "end": end_datetime.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
-                "activity": activity
-            })
-    else:
-        converted_movements = []
-        for i, movement in enumerate(movements):
-            start_seconds, end_seconds = movement
-            start_datetime = first_timestamp_dt + timedelta(seconds=start_seconds)
-            end_datetime = first_timestamp_dt + timedelta(seconds=end_seconds)
-            
-            converted_movements.append({
-                "start": start_datetime.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
-                "end": end_datetime.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
-                "activity": 'error,please modify on visualize_app'
-            })
+    #         converted_movements.append({
+    #             "start": start_datetime.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
+    #             "end": end_datetime.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
+    #             "activity": 'error,please modify on visualize_app'
+    #         })
     output_json_path = os.path.splitext(json_path)[0] + '_datetime.json'
     with open(output_json_path, 'w') as f:
         json.dump(converted_movements, f, indent=4)

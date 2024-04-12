@@ -25,7 +25,7 @@ def get_fake_ntp_time(local_time, time_difference):
     else:
         fake_ntp_time = local_time
 
-    return fake_ntp_time.strftime('%Y-%m-%d %H:%M:%S.%f')
+    return fake_ntp_time
 
 def get_ntp_time(server="192.168.31.35", port=1230):
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

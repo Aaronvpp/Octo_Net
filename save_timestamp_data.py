@@ -66,6 +66,11 @@ def get_next_index_global_log(output_directory):
     indices = [int(os.path.splitext(os.path.basename(f))[0].split('_')[1]) for f in existing_files]
     return max(indices) + 1 if indices else 0
 
+def append_data_to_pickle(file_path, data_dict):
+    with open(file_path, 'ab') as f:
+        pickle.dump(data_dict, f)
+
+
 def save_timestamp_data_polar(temp_data, file_name, timestamp, output_directory):
     data_folder = os.path.join(output_directory, "data")
     
@@ -74,19 +79,20 @@ def save_timestamp_data_polar(temp_data, file_name, timestamp, output_directory)
 
     file_path = os.path.join(data_folder, '{}.pickle'.format(file_name))
     
-    # Load existing data if the file exists
-    if os.path.exists(file_path):
-        with open(file_path, 'rb') as f:
-            existing_data = pickle.load(f)
-    else:
-        existing_data = []
+    # # Load existing data if the file exists
+    # if os.path.exists(file_path):
+    #     with open(file_path, 'rb') as f:
+    #         existing_data = pickle.load(f)
+    # else:
+    #     existing_data = []
 
     if temp_data["values"]:
         data_dict = {"timestamp": timestamp, "data": temp_data["values"][-1]}
-        existing_data.append(data_dict)
+        append_data_to_pickle(file_path, data_dict)
+        # existing_data.append(data_dict)
     
-    with open(file_path, 'wb') as f:
-        pickle.dump(existing_data, f)
+    # with open(file_path, 'wb') as f:
+        # pickle.dump(existing_data, f)
 
     return file_path
 
