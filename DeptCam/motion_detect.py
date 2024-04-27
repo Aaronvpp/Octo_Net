@@ -3,14 +3,89 @@ import json
 import os
 from datetime import datetime, timedelta
 
-def detect_motion(video_path, buffer_time=2.0, sensitivity=500):
+# def detect_motion(video_path, buffer_time=2.0, sensitivity=500, pre_buffer_time=0.5):
+
+#     """
+#     Detects motion in a video and saves the start and end times of movements to a JSON file.
+
+#     Parameters:
+#     - video_path: Path to the video file.
+#     - buffer_time: Time in seconds to buffer the end of a movement detection.
+#     - sensitivity: The minimum area for a contour to be considered motion.
+
+#     Returns:
+#     - A JSON file path where movements are saved.
+#     """
+#     camera = cv2.VideoCapture(video_path)
+#     if not camera.isOpened():
+#         print('Failed to open video')
+#         return
+
+#     pre_frame = None
+#     movement_detected = False
+#     movements = []
+#     last_movement_time = 0
+
+#     while True:
+#         grabbed, frame = camera.read()
+#         if not grabbed:
+#             if movement_detected and (camera.get(cv2.CAP_PROP_POS_MSEC) / 1000.0 - last_movement_time >= buffer_time):
+#                 end_time = last_movement_time
+#                 movements.append((max(start_time - pre_buffer_time, 0), end_time))
+#                 movement_detected = False
+#             break
+
+#         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+#         gray_frame = cv2.GaussianBlur(gray_frame, (21, 21), 0)
+
+#         if pre_frame is None:
+#             pre_frame = gray_frame
+#             continue
+
+#         img_delta = cv2.absdiff(pre_frame, gray_frame)
+#         thresh = cv2.threshold(img_delta, 25, 255, cv2.THRESH_BINARY)[1]
+#         thresh = cv2.dilate(thresh, None, iterations=2)
+#         contours, _ = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+#         current_time = camera.get(cv2.CAP_PROP_POS_MSEC) / 1000.0
+#         movement_now = False
+#         for c in contours:
+#             if cv2.contourArea(c) < sensitivity:
+#                 continue
+#             movement_now = True
+#             last_movement_time = current_time
+#             if not movement_detected:
+#                 start_time = current_time
+#                 movement_detected = True
+#             break
+
+#         if movement_detected and not movement_now and (current_time - last_movement_time >= buffer_time):
+#             end_time = last_movement_time
+#             movements.append((max(start_time - pre_buffer_time, 0), end_time))
+#             movement_detected = False
+
+#         pre_frame = gray_frame
+
+#     camera.release()
+
+#     json_path = os.path.splitext(video_path)[0] + '.json'
+#     with open(json_path, 'w') as f:
+#         json.dump(movements, f, indent=4)
+
+#     return json_path
+
+def detect_motion(video_path, buffer_time=2.0, sensitivity=500, pre_buffer_time=0.5, min_duration=1.5, post_buffer_time=0.5):
     """
-    Detects motion in a video and saves the start and end times of movements to a JSON file.
+    Detects motion in a video and saves the start and end times of movements to a JSON file,
+    excluding movements that last less than the specified minimum duration and adding post buffer time after the movement stops.
 
     Parameters:
     - video_path: Path to the video file.
     - buffer_time: Time in seconds to buffer the end of a movement detection.
     - sensitivity: The minimum area for a contour to be considered motion.
+    - pre_buffer_time: Time in seconds to capture before the detected start of the movement.
+    - min_duration: Minimum duration in seconds for a movement to be saved.
+    - post_buffer_time: Time in seconds to continue recording after the movement has stopped.
 
     Returns:
     - A JSON file path where movements are saved.
@@ -28,9 +103,11 @@ def detect_motion(video_path, buffer_time=2.0, sensitivity=500):
     while True:
         grabbed, frame = camera.read()
         if not grabbed:
-            if movement_detected and (camera.get(cv2.CAP_PROP_POS_MSEC) / 1000.0 - last_movement_time >= buffer_time):
-                end_time = last_movement_time
-                movements.append((start_time, end_time))
+            if movement_detected:
+                end_time = last_movement_time + post_buffer_time
+                adjusted_start_time = max(start_time - pre_buffer_time, 0)
+                if (end_time - adjusted_start_time >= min_duration):
+                    movements.append((adjusted_start_time, end_time))
                 movement_detected = False
             break
 
@@ -58,10 +135,13 @@ def detect_motion(video_path, buffer_time=2.0, sensitivity=500):
                 movement_detected = True
             break
 
-        if movement_detected and not movement_now and (current_time - last_movement_time >= buffer_time):
-            end_time = last_movement_time
-            movements.append((start_time, end_time))
-            movement_detected = False
+        if movement_detected and not movement_now:
+            if (current_time - last_movement_time >= buffer_time):
+                end_time = last_movement_time + post_buffer_time
+                adjusted_start_time = max(start_time - pre_buffer_time, 0)
+                if (end_time - adjusted_start_time >= min_duration):
+                    movements.append((adjusted_start_time, end_time))
+                movement_detected = False
 
         pre_frame = gray_frame
 

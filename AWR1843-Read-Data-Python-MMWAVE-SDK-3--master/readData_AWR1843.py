@@ -415,7 +415,7 @@ ax.set_ylabel('Y position (m)')
 ax.set_zlabel('Z position (m)')
 # Set the axis limits
 ax.set_xlim(-5, 5)
-ax.set_ylim(0, 3)
+ax.set_ylim(0, 5)
 ax.set_zlim(-5, 5)
 scatter_plot_collection = ax.scatter([], [], [], c='r', marker='o')  # Create an empty scatter plot collection
    

@@ -437,9 +437,9 @@ def simple_xep_plot(device_name, record=False, baseband=False):
         xep.x4driver_set_downconversion(int(baseband))
         # Start streaming of data
         xep.x4driver_set_fps(FPS)
-        # xep.x4driver_set_frame_area_offset(0)
-        xep.x4driver_set_frame_area(float(min_dist),float(max_dist))
-
+        xep.x4driver_set_frame_area_offset(0)
+        xep.x4driver_set_frame_area(float(min_dist),float(max_dist))    
+        print((xep.x4driver_get_tx_center_frequency()),'ep.x4driver_get_tx_center_frequency')
         def read_frame(f,timeflag):
             """Gets frame data from module"""
             d = xep.read_message_data_float()

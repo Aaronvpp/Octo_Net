@@ -29,6 +29,15 @@ from seekcamera import (
 )
 
 
+def get_folder_size(folder_path):
+    total_size = 0
+    for root, dirs, files in os.walk(folder_path):
+        for file in files:
+            file_path = os.path.join(root, file)
+            if os.path.isfile(file_path):
+                total_size += os.path.getsize(file_path)
+    return total_size
+
 # To see the size of the saved pickle
 def convert_size(size_bytes):
     if size_bytes == 0:
@@ -169,21 +178,24 @@ def main():
     # seekthermal_settings = json.loads(seekthermal_settings_str)
     frame_rate = float(seekthermal_settings.get('frame_rate'))
     timeout = 1/frame_rate
-    data_folder = os.path.join(output_directory, "data")
+    data_folder = os.path.join(output_directory, "data", file_name)
 
     if not os.path.exists(data_folder):
         os.makedirs(data_folder)
 
-    file_path = os.path.join(data_folder, f'output_{experiment_idx}.pickle')
-    thermal_video_filename = os.path.join(data_folder, f'{file_name}.mp4')
+
+    # file_path = os.path.join(data_folder, f'output_{experiment_idx}.pickle')
+    # thermal_video_filename = os.path.join(data_folder, f'{file_name}.mp4')
     
     # Open the file in append mode ('ab')
     #with open(file_path, 'ab') as f:
-    
+    # original_data_filename = os.path.join(data_folder, "original_data.npy")
+    # beforemp4_data_filename = os.path.join(data_folder, "beforemp4_data.npy")
     with SeekCameraManager(SeekCameraIOType.USB) as manager:
         renderer = Renderer()
         manager.register_event_callback(on_event, renderer)
-
+        temperature_data = [] 
+        temperature_data2 = [] 
         
         while True:
             with renderer.frame_condition:
@@ -195,22 +207,36 @@ def main():
                         (height, width,_ ) = img.shape
                         # cv2.resizeWindow(window_name, width * 2, height * 2)
                         renderer.first_frame = False
-                        thermal_video_writer = cv2.VideoWriter(thermal_video_filename, cv2.VideoWriter_fourcc(*'mp4v'), frame_rate, (width, height))
+                        # thermal_video_writer = cv2.VideoWriter(thermal_video_filename, cv2.VideoWriter_fourcc(*'mp4v'), frame_rate, (width, height), isColor=False)
                         
                     # cv2.setMouseCallback(window_name, on_click,(temp,img))
                     # cv2.imshow(window_name, img)
-                    print("Temperature data:", temp)
-                    print(temp.dtype)
+                    # print("Temperature data:", temp)
+                    # print(temp.dtype)
+                    # temp = temp.astype(np.float16)
+                    # print("Temperature data:", temp)
+                    # print(temp.dtype)
                     # Filter out temperature values outside the range [min_temp, max_temp]
                     temp_filtered = np.clip(temp, min_temp, max_temp)
+                    # Access temperature data from renderer
+                    # temperature_data.append(temp_filtered)
                     # Append the filtered frame to the list(for testing purposes)
                     # all_depth_frames.append(temp_filtered)
                     # Normalize to the range [0, 255]
-                    temp_normalized = cv2.normalize(temp_filtered, None, 0, 255, cv2.NORM_MINMAX)
+                    # temp_normalized = cv2.normalize(temp_filtered, None, 0, 255, cv2.NORM_MINMAX)
+                    # Configuration for expected temperature range
+                    
+
+                    # Manual normalization using configured min and max
+                    temp_normalized = (temp_filtered - min_temp) / (max_temp - min_temp) * 255
                     temp_normalized = np.uint8(temp_normalized)
+
+                    # temperature_data2.append(temp_normalized)
+                    # Replicate grayscale data across three channels to create an RGB image
+                    # temp_rgb = np.stack((temp_normalized, temp_normalized, temp_normalized), axis=-1)
                     # Inside the while True loop, after processing the temperature data
-                    color_mapped_temp = cv2.applyColorMap(temp_normalized, cv2.COLORMAP_JET)
-                    thermal_video_writer.write(color_mapped_temp)
+                    # color_mapped_temp = cv2.applyColorMap(temp_normalized, cv2.COLORMAP_JET)
+                    # thermal_video_writer.write(temp_normalized)
                     
                     # Get the current local time
                     # timestamp = get_local_time()
@@ -232,6 +258,10 @@ def main():
                     print("fake_ntp_timestamp", fake_ntp_timestamp)
                     # Append the timestamp to the list
                     seekthermal_video_timestamps.append(fake_ntp_timestamp)
+
+                    # Saving each frame as a PNG file
+                    frame_filename = os.path.join(data_folder, f'thermal_{fake_ntp_timestamp}.png')
+                    cv2.imwrite(frame_filename, temp_normalized)  # Make sure the data type of temp_filtered is suitable for PNG
                     # Save the temperature data and timestamp
                     #save_timestamp_data_modified(temp, fake_ntp_timestamp, f)
                     # pickle_idx = pickle_idx + 1
@@ -247,10 +277,21 @@ def main():
                 # npy_filepath = os.path.join(data_folder, f'all_depth_frames_{experiment_idx}.npy')
                 # np.save(npy_filepath, np.array(all_depth_frames))
                 # save all frames in one .npy file(for testing purposes)
-                thermal_video_writer.release()
-                # Measure the size of the MP4 file
-                mp4_size = os.path.getsize(thermal_video_filename)
-                human_readable_mp4_size = convert_size(mp4_size)
+                # thermal_video_writer.release()
+                # Save the collected temperature data as a NumPy array
+                # np.save(original_data_filename, np.array(temperature_data))
+                # print(f"Saved original temperature data to {original_data_filename}")
+                # Path to save the pickle file
+                # original_pickle_filename = os.path.join(data_folder, "original_data.pickle")
+
+                # Save the data using pickle
+                # with open(original_pickle_filename, 'wb') as file:
+                #     pickle.dump(temperature_data, file)
+                # np.save(beforemp4_data_filename, np.array(temperature_data2))
+                # print(f"Saved original temperature data to {beforemp4_data_filename}")
+                # Measure the size of the PNG file
+                all_size = get_folder_size(data_folder)
+                human_readable_all_size = convert_size(all_size)
                 logger.info("End recording by a terminate action.")
                 with open(os.path.join(data_folder, f'{file_name}.txt'), 'w') as f:
                     for timestamp in seekthermal_video_timestamps:
@@ -259,10 +300,10 @@ def main():
                 #human_readable_size = convert_size(pickle_size)
                 with open(os.path.join(os.path.dirname(__file__), "seekthermal_data_saved_status.txt"), "w") as f:
                     #f.write(f"seekthermal Data saved seekcamera-python/runseek/data/output_{experiment_idx}.pickle,\n")
-                    f.write(f"seekthermal Data saved /seekThermal/data/{file_name}.mp4\n")
+                    f.write(f"seekthermal Data saved /seekThermal/data/{file_name}\n")
                     f.write(f"seekthermal Log saved /seekThermal/logs/{file_name}.log\n")
                     f.write(f"Total frames processed: {frame_counter},\n")
-                    f.write(f"Thermal video file size: {human_readable_mp4_size}\n")
+                    f.write(f"Thermal video file size: {human_readable_all_size}\n")
                     #f.write(f"Pickle file size: {human_readable_size}\n")
                 break
 

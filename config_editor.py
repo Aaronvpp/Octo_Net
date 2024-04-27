@@ -837,6 +837,13 @@ if st.button("Terminate All") or st.session_state.terminate_flag == True:
         col1.metric("IRA data", f"{number_of_pickles}", "pickle files saved")
         os.remove(ira_status_path)
 
+    # Function to count the number of directories matching the specific pattern
+    def count_matching_directories(base_directory, pattern):
+        matching_directories = [name for name in os.listdir(base_directory)
+                                if os.path.isdir(os.path.join(base_directory, name))
+                                and re.match(pattern, name)]
+        return len(matching_directories)
+    
     seekthermal_status_path = os.path.join("seekcamera-python","runseek", "seekthermal_data_saved_status.txt")
     if os.path.exists(seekthermal_status_path):
         with open(seekthermal_status_path, "r") as f:
@@ -847,17 +854,14 @@ if st.button("Terminate All") or st.session_state.terminate_flag == True:
         # Assuming the mp4 files are stored in a specific directory
         # Replace 'your_mp4_directory' with the actual directory where the mp4 files are stored
         seekthermal_mp4_directory = os.path.join("seekcamera-python", "runseek", "data")
-        number_of_mp4s = count_mp4_files(seekthermal_mp4_directory)
+        directory_pattern = r'\d{14}_node_\d+_modality_seekthermal_subject_\d+_activity_\w+_trial_\d+'
+        number_of_directories = count_matching_directories(seekthermal_mp4_directory, directory_pattern)
+        # number_of_mp4s = count_mp4_files(seekthermal_mp4_directory)
 
-        col2.metric("SeekThermal data", f"{number_of_mp4s}", "mp4 files saved")
+        col2.metric("SeekThermal data", f"{number_of_directories}", "seekthermal directories files saved")
         os.remove(seekthermal_status_path)
 
-    # Function to count the number of directories matching the specific pattern
-    def count_matching_directories(base_directory, pattern):
-        matching_directories = [name for name in os.listdir(base_directory)
-                                if os.path.isdir(os.path.join(base_directory, name))
-                                and re.match(pattern, name)]
-        return len(matching_directories)
+    
 
     # Reporting where the DeptCam data is stored
     deptcam_status_path = os.path.join("DeptCam", "deptcam_data_saved_status.txt")
