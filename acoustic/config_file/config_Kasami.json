@@ -10,7 +10,9 @@
         "frame_length": 1023,
         "nchannels": 1,
         "nbits": 10,
-        "load_dataplay": false
+        "load_dataplay": true,
+        "dataplay_path": "Audio_Collector/data_play",
+        "dataplay_name": "Kasami_63_0_40_true_true_512_20250_1_256_2.5.wav"
     },
     "global_arg": {
         "delay": 1,

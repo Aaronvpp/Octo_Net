@@ -532,7 +532,9 @@ with col6:
             "frame_length": frame_length,
             "nchannels": nchannels,
             "nbits": nbits,
-            "load_dataplay": False  # Set default or retrieve from config
+            "load_dataplay": True,
+            "dataplay_path": "Audio_Collector/data_play",
+            "dataplay_name": "Kasami_63_0_40_true_true_512_20250_1_256_2.5.wav"
         },
         "global_arg": {
             "delay": delay,
