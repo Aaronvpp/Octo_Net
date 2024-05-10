@@ -164,7 +164,7 @@ def update_modality_status(status_placeholder):
         "MMWave": 10,
         "SeekThermal": 10,
         "Polar": 2,
-        "uwb": 15,
+        "uwb": 19,
         "ToF": 10,
     }
     try:

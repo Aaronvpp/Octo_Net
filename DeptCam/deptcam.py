@@ -119,6 +119,9 @@ pipeline_wrapper = rs.pipeline_wrapper(pipeline)
 pipeline_profile = config.resolve(pipeline_wrapper)
 device = pipeline_profile.get_device()
 depth_sensor = pipeline_profile.get_device().first_depth_sensor()
+
+# depth_sensor = pipeline_profile.get_device().query_sensors()[0]
+depth_sensor.set_option(rs.option.hdr_enabled, 1)
 depth_scale = depth_sensor.get_depth_scale()
 # print("depth_scale: ", depth_scale)
 
@@ -151,6 +154,7 @@ timeflag = True
 #for testing the MSE
 # Initialize a list to store the frames
 # all_depth_frames = []
+hdr = rs.hdr_merge() # needs to be declared once
 try:
  
     # file_path = os.path.join(depth_output_path, f'output_{index}.pickle')
@@ -158,7 +162,9 @@ try:
     while True:
         # Wait for a coherent pair of frames: depth and color
         frames = pipeline.wait_for_frames()
+        frames  = hdr.process(frames).as_frameset()
         depth_frame = frames.get_depth_frame()
+        
         color_frame = frames.get_color_frame()
         if not depth_frame or not color_frame:
             continue
@@ -266,6 +272,8 @@ try:
             all_size = get_folder_size(main_output_path)
             human_readable_mp4_size = convert_size(mp4_size)
             human_readable_all_size = convert_size(all_size)
+            # Calculate the number of movement for correction
+            # _, num_movement = detect_motion(rgb_video_filename)
             #pickle_size = os.path.getsize(file_path)
             #human_readable_size = convert_size(pickle_size)
             with open(os.path.join(os.path.dirname(__file__), "deptcam_data_saved_status.txt"), "w") as f:
@@ -277,6 +285,7 @@ try:
                     #f.write(f"DepthCam Pickle file size: {human_readable_size},\n")
                     f.write(f"DepthCam all file size: {human_readable_all_size},\n")
                     f.write(f"RGB Video file size: {human_readable_mp4_size}.\n")
+                    
             break
     # while True:
     #     # Wait for a coherent pair of frames: depth and color
@@ -374,12 +383,14 @@ finally:
     # Check if 'node_1' is in the RGB video filename
     if 'node_1' in rgb_video_filename:
         # For RGB video motion detection
-        output_json_path = detect_motion(rgb_video_filename)  # Function call to detect motion
+        output_json_path, num_movement = detect_motion(rgb_video_filename)  # Function call to detect motion
+        if num_movement != 10:
+            logger.info(f"Movement wrong! Not equal to 10. number of: {num_movement}.")
         # Assuming the paths are set up correctly above
         activities_path = '/home/aiot-mini/code/DeptCam/data/activity.txt'  # Update this path
         
         # Assuming the timestamp path for the RGB video is as created above
-        real_timestamps_path = convert_to_real_timestamps(output_json_path, os.path.join(main_output_path, f'{file_name_rgb}.txt'), activities_path)  # Convert timestamps
+        real_timestamps_path = convert_to_real_timestamps(output_json_path, os.path.join(main_output_path, f'{file_name_rgb}.txt'))  # Convert timestamps
 
         # Optionally, log or print the path to the JSON with real timestamps
         print(f"Real timestamps JSON saved at: {real_timestamps_path}")

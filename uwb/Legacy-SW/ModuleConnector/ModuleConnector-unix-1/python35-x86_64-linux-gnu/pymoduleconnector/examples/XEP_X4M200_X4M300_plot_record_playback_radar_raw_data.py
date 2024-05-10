@@ -361,7 +361,7 @@ def clear_buffer(mc):
         xep.read_message_data_float()
 
 def simple_xep_plot(device_name, record=False, baseband=False):
-    FPS = 10
+    FPS = 17
     directory = '.'
     # reset(device_name)
     mc = pymoduleconnector.ModuleConnector(device_name)

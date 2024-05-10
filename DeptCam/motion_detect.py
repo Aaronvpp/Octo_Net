@@ -99,6 +99,7 @@ def detect_motion(video_path, buffer_time=2.0, sensitivity=500, pre_buffer_time=
     movement_detected = False
     movements = []
     last_movement_time = 0
+    movement_periods = 0
 
     while True:
         grabbed, frame = camera.read()
@@ -108,6 +109,7 @@ def detect_motion(video_path, buffer_time=2.0, sensitivity=500, pre_buffer_time=
                 adjusted_start_time = max(start_time - pre_buffer_time, 0)
                 if (end_time - adjusted_start_time >= min_duration):
                     movements.append((adjusted_start_time, end_time))
+                    movement_periods += 1
                 movement_detected = False
             break
 
@@ -141,6 +143,7 @@ def detect_motion(video_path, buffer_time=2.0, sensitivity=500, pre_buffer_time=
                 adjusted_start_time = max(start_time - pre_buffer_time, 0)
                 if (end_time - adjusted_start_time >= min_duration):
                     movements.append((adjusted_start_time, end_time))
+                    movement_periods += 1
                 movement_detected = False
 
         pre_frame = gray_frame
@@ -151,7 +154,7 @@ def detect_motion(video_path, buffer_time=2.0, sensitivity=500, pre_buffer_time=
     with open(json_path, 'w') as f:
         json.dump(movements, f, indent=4)
 
-    return json_path
+    return json_path, movement_periods
 
 def load_activities(activities_path):
     """
@@ -167,7 +170,7 @@ def load_activities(activities_path):
         activities = [line.strip() for line in f.readlines()]
     return activities
 
-def convert_to_real_timestamps(json_path, timestamp_path, activities_path):
+def convert_to_real_timestamps(json_path, timestamp_path):
     """
     Converts the motion detection timestamps to real-world timestamps based on a reference timestamp,
     and associates each segment with an activity. If the number of movements doesn't match the number
