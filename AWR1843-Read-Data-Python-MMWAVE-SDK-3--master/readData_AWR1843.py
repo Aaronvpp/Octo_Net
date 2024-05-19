@@ -287,7 +287,7 @@ def readAndParseData18xx(Dataport, configParameters):
             # Check the header of the TLV message
 
             ########## debug ##########
-            print(byteBuffer[idX:idX+4], word)
+            # print(byteBuffer[idX:idX+4], word)
 
             # tlv_type = np.matmul(byteBuffer[idX:idX+4],word)
             tlv_type = 1
@@ -307,7 +307,8 @@ def readAndParseData18xx(Dataport, configParameters):
                 for objectNum in range(numDetectedObj):
                     
                     # Read the data for each object
-                    print("x byte data: {}".format(byteBuffer[idX:idX + 4]))
+                    # print("x byte data: {}".format(byteBuffer[idX:idX + 4]))
+                    # WHEN X = [], THE ERROR OCCURS
                     x[objectNum] = byteBuffer[idX:idX + 4].view(dtype=np.float32)
                     idX += 4
                     y[objectNum] = byteBuffer[idX:idX + 4].view(dtype=np.float32)
