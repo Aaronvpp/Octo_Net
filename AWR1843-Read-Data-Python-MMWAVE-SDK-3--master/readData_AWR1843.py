@@ -283,9 +283,14 @@ def readAndParseData18xx(Dataport, configParameters):
             
             # word array to convert 4 bytes to a 32 bit number
             word = [1, 2**8, 2**16, 2**24]
-
+    
             # Check the header of the TLV message
-            tlv_type = np.matmul(byteBuffer[idX:idX+4],word)
+
+            ########## debug ##########
+            print(byteBuffer[idX:idX+4], word)
+
+            # tlv_type = np.matmul(byteBuffer[idX:idX+4],word)
+            tlv_type = 1
             idX += 4
             tlv_length = np.matmul(byteBuffer[idX:idX+4],word)
             idX += 4
@@ -302,6 +307,7 @@ def readAndParseData18xx(Dataport, configParameters):
                 for objectNum in range(numDetectedObj):
                     
                     # Read the data for each object
+                    print("x byte data: {}".format(byteBuffer[idX:idX + 4]))
                     x[objectNum] = byteBuffer[idX:idX + 4].view(dtype=np.float32)
                     idX += 4
                     y[objectNum] = byteBuffer[idX:idX + 4].view(dtype=np.float32)
